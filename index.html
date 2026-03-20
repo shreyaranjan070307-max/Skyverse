@@ -1,0 +1,1387 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SkyVerse — Interactive Cosmology & Astronomy Learning Portal</title>
+<meta name="description" content="Explore the universe through interactive 3D solar system simulations, constellation maps, planetary science, and space mission archives."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg:#00000f;--bg2:#05051a;--bg3:#080825;
+  --cyan:#00d4ff;--purple:#7b2fff;--gold:#ffb340;--rose:#ff4d8d;
+  --text:#e8eaf6;--muted:#8892b0;--border:rgba(0,212,255,0.18);
+  --glow-cyan:0 0 20px rgba(0,212,255,0.5),0 0 60px rgba(0,212,255,0.2);
+  --glow-purple:0 0 20px rgba(123,47,255,0.5),0 0 60px rgba(123,47,255,0.2);
+  --font-head:'Orbitron',monospace;--font-body:'Syne',sans-serif;
+  --radius:12px;--transition:0.35s cubic-bezier(0.4,0,0.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;font-size:16px;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);overflow-x:hidden;line-height:1.6;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:3px;}
+a{color:inherit;text-decoration:none;}
+img{max-width:100%;height:auto;}
+.sr-only{position:absolute;left:-9999px;}
+
+/* ── LOADING SCREEN ── */
+#loader{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity 0.8s ease,visibility 0.8s ease;}
+#loader.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.loader-ring{width:120px;height:120px;border-radius:50%;border:3px solid rgba(0,212,255,0.15);border-top-color:var(--cyan);border-right-color:var(--purple);animation:spin 1.4s linear infinite;box-shadow:var(--glow-cyan);position:relative;}
+.loader-ring::after{content:'';position:absolute;inset:12px;border-radius:50%;border:2px solid rgba(123,47,255,0.2);border-bottom-color:var(--purple);animation:spin 2s linear infinite reverse;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-logo{font-family:var(--font-head);font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:4px;}
+.loader-bar{width:200px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.loader-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--purple));animation:loadBar 2.5s ease-in-out forwards;}
+@keyframes loadBar{to{width:100%;}}
+.loader-text{font-size:0.75rem;letter-spacing:3px;color:var(--muted);font-family:var(--font-head);}
+
+/* ── NAVBAR ── */
+#navbar{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:var(--transition);}
+#navbar.scrolled{background:rgba(0,0,15,0.97);}
+.nav-logo{font-family:var(--font-head);font-size:1.4rem;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px;}
+.nav-links{display:flex;align-items:center;gap:6px;list-style:none;}
+.nav-links a{font-family:var(--font-head);font-size:0.62rem;letter-spacing:1.5px;padding:6px 10px;border-radius:6px;color:var(--muted);transition:var(--transition);text-transform:uppercase;}
+.nav-links a:hover,.nav-links a.active{color:var(--cyan);text-shadow:0 0 10px var(--cyan);}
+.nav-cta{font-family:var(--font-head);font-size:0.68rem;letter-spacing:2px;padding:8px 18px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff;cursor:pointer;border:none;transition:var(--transition);text-transform:uppercase;}
+.nav-cta:hover{box-shadow:var(--glow-cyan);transform:translateY(-1px);}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
+.hamburger span{width:24px;height:2px;background:var(--cyan);border-radius:2px;transition:var(--transition);}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.mobile-menu{display:none;position:fixed;top:64px;left:0;right:0;background:rgba(0,0,15,0.98);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);z-index:999;padding:20px;flex-direction:column;gap:8px;}
+.mobile-menu.open{display:flex;}
+.mobile-menu a{font-family:var(--font-head);font-size:0.75rem;letter-spacing:2px;padding:12px 16px;border-radius:8px;color:var(--muted);text-transform:uppercase;border:1px solid transparent;transition:var(--transition);}
+.mobile-menu a:hover{color:var(--cyan);border-color:var(--border);}
+
+/* ── SECTION COMMONS ── */
+section{min-height:100vh;padding:100px 24px 60px;}
+.section-header{text-align:center;margin-bottom:60px;}
+.section-badge{display:inline-block;font-family:var(--font-head);font-size:0.65rem;letter-spacing:3px;padding:6px 16px;border-radius:20px;border:1px solid var(--border);color:var(--cyan);margin-bottom:16px;text-transform:uppercase;}
+.section-title{font-family:var(--font-head);font-size:clamp(1.8rem,4vw,3rem);font-weight:900;background:linear-gradient(135deg,#fff 30%,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px;line-height:1.2;}
+.section-sub{color:var(--muted);font-size:1rem;max-width:600px;margin:0 auto;}
+.container{max-width:1300px;margin:0 auto;}
+
+/* ── SCROLL REVEAL ── */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.8s ease,transform 0.8s ease;}
+.reveal.visible{opacity:1;transform:none;}
+
+/* ── HERO ── */
+#hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;}
+#starfield-canvas{position:absolute;inset:0;z-index:0;}
+.hero-content{position:relative;z-index:2;text-align:center;padding:24px;}
+.hero-badge{font-family:var(--font-head);font-size:0.65rem;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.hero-badge::before,.hero-badge::after{content:'';width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan));}
+.hero-badge::after{transform:scaleX(-1);}
+.hero-title{font-family:var(--font-head);font-size:clamp(2.5rem,7vw,6rem);font-weight:900;line-height:1.05;margin-bottom:24px;}
+.hero-title span{display:block;}
+.hero-title .line1{background:linear-gradient(135deg,#fff,#e0e0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-title .line2{background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-sub{font-size:1.1rem;color:var(--muted);max-width:560px;margin:0 auto 40px;}
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+.btn-primary{font-family:var(--font-head);font-size:0.75rem;letter-spacing:2px;padding:14px 32px;background:linear-gradient(135deg,var(--cyan),var(--purple));border:none;border-radius:8px;color:#fff;cursor:pointer;transition:var(--transition);text-transform:uppercase;}
+.btn-primary:hover{box-shadow:var(--glow-cyan);transform:translateY(-2px);}
+.btn-outline{font-family:var(--font-head);font-size:0.75rem;letter-spacing:2px;padding:14px 32px;background:transparent;border:1px solid var(--cyan);border-radius:8px;color:var(--cyan);cursor:pointer;transition:var(--transition);text-transform:uppercase;}
+.btn-outline:hover{background:rgba(0,212,255,0.08);box-shadow:var(--glow-cyan);}
+.hero-orbital{position:absolute;border-radius:50%;border:1px solid rgba(0,212,255,0.12);animation:spin 20s linear infinite;pointer-events:none;}
+.hero-orbital:nth-child(1){width:300px;height:300px;animation-duration:20s;}
+.hero-orbital:nth-child(2){width:500px;height:500px;animation-duration:35s;animation-direction:reverse;border-color:rgba(123,47,255,0.1);}
+.hero-orbital:nth-child(3){width:700px;height:700px;animation-duration:50s;border-color:rgba(0,212,255,0.06);}
+.hero-stats{display:flex;gap:40px;justify-content:center;margin-top:60px;flex-wrap:wrap;}
+.hero-stat{text-align:center;}
+.hero-stat-num{font-family:var(--font-head);font-size:1.8rem;font-weight:900;color:var(--cyan);}
+.hero-stat-label{font-size:0.75rem;color:var(--muted);letter-spacing:1px;margin-top:4px;}
+
+/* ── 3D SOLAR SYSTEM ── */
+#solar-system{padding:0;position:relative;background:var(--bg);}
+#solar-container{width:100%;height:100vh;position:relative;}
+#three-canvas{width:100%;height:100%;}
+#solar-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;background:rgba(0,0,15,0.7);cursor:pointer;transition:opacity 0.5s;}
+#solar-overlay.hidden{opacity:0;pointer-events:none;}
+.solar-overlay-content{text-align:center;}
+.solar-overlay-content .pulse{width:80px;height:80px;border-radius:50%;border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:pulse 2s ease-in-out infinite;box-shadow:var(--glow-cyan);}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.1);opacity:0.7;}}
+.solar-overlay-content h3{font-family:var(--font-head);font-size:1rem;letter-spacing:4px;margin-bottom:8px;color:var(--cyan);}
+.solar-overlay-content p{color:var(--muted);font-size:0.85rem;}
+#solar-controls{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:20;flex-wrap:wrap;justify-content:center;}
+.ctrl-btn{font-family:var(--font-head);font-size:0.6rem;letter-spacing:1.5px;padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:rgba(0,0,15,0.8);color:var(--cyan);cursor:pointer;transition:var(--transition);text-transform:uppercase;}
+.ctrl-btn.active,.ctrl-btn:hover{border-color:var(--cyan);box-shadow:var(--glow-cyan);}
+.speed-wrap{display:flex;align-items:center;gap:8px;background:rgba(0,0,15,0.8);border:1px solid var(--border);padding:8px 16px;border-radius:20px;}
+.speed-wrap label{font-family:var(--font-head);font-size:0.6rem;color:var(--cyan);letter-spacing:1px;}
+#speedSlider{-webkit-appearance:none;width:100px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;outline:none;}
+#speedSlider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 8px var(--cyan);}
+#solar-info-panel{position:absolute;top:80px;right:24px;width:280px;background:rgba(5,5,26,0.95);border:1px solid var(--border);border-radius:16px;padding:24px;z-index:20;display:none;backdrop-filter:blur(20px);}
+#solar-info-panel.show{display:block;animation:slideIn 0.3s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
+#close-panel{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;line-height:1;}
+.panel-planet-img{width:80px;height:80px;border-radius:50%;margin:0 auto 16px;display:block;border:2px solid var(--border);object-fit:cover;}
+.panel-name{font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--cyan);text-align:center;margin-bottom:12px;}
+.panel-stat{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.8rem;}
+.panel-stat-label{color:var(--muted);}
+.panel-stat-value{color:var(--text);font-weight:600;}
+.panel-fact{margin-top:12px;padding:10px;background:rgba(0,212,255,0.05);border-radius:8px;border-left:3px solid var(--cyan);font-size:0.78rem;color:var(--muted);font-style:italic;line-height:1.5;}
+.planet-labels{position:absolute;top:0;left:0;pointer-events:none;z-index:5;}
+.planet-label{position:absolute;font-family:var(--font-head);font-size:0.6rem;letter-spacing:2px;color:var(--cyan);text-shadow:0 0 8px var(--cyan);transform:translate(-50%,-100%);margin-top:-8px;white-space:nowrap;transition:opacity 0.3s;}
+
+/* ── CONSTELLATION EXPLORER ── */
+#constellations{background:var(--bg2);}
+.constellation-layout{display:grid;grid-template-columns:1fr 340px;gap:32px;align-items:start;}
+.constellation-mapbox{position:relative;background:#020210;border:1px solid var(--border);border-radius:16px;overflow:hidden;aspect-ratio:16/9;}
+#const-svg{width:100%;height:100%;}
+.constellation-sidebar{display:flex;flex-direction:column;gap:16px;}
+#const-search{width:100%;padding:12px 16px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font-body);font-size:0.9rem;outline:none;transition:var(--transition);}
+#const-search:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,0.1);}
+.const-list{display:flex;flex-direction:column;gap:8px;max-height:500px;overflow-y:auto;}
+.const-item{padding:12px 16px;background:rgba(255,255,255,0.03);border:1px solid transparent;border-radius:10px;cursor:pointer;transition:var(--transition);}
+.const-item:hover,.const-item.active{border-color:var(--cyan);background:rgba(0,212,255,0.06);}
+.const-item-name{font-family:var(--font-head);font-size:0.75rem;letter-spacing:1px;color:var(--cyan);margin-bottom:2px;}
+.const-item-season{font-size:0.7rem;color:var(--muted);}
+.const-card{background:rgba(5,5,26,0.9);border:1px solid var(--border);border-radius:12px;padding:20px;display:none;}
+.const-card.show{display:block;animation:slideIn 0.3s ease;}
+.const-card h3{font-family:var(--font-head);font-size:1rem;color:var(--cyan);margin-bottom:8px;}
+.const-card p{font-size:0.82rem;color:var(--muted);line-height:1.6;}
+.const-card .myth{margin-top:10px;padding:10px;background:rgba(123,47,255,0.08);border-radius:8px;border-left:3px solid var(--purple);font-size:0.78rem;color:var(--muted);font-style:italic;}
+
+/* ── 360 STAR MAP ── */
+#starmap{background:var(--bg);}
+.starmap-wrap{position:relative;border:1px solid var(--border);border-radius:16px;overflow:hidden;height:500px;background:#000;}
+#starmap-canvas{width:100%;height:100%;cursor:grab;}
+#starmap-canvas:active{cursor:grabbing;}
+.starmap-dirs{position:absolute;top:50%;left:0;right:0;pointer-events:none;}
+.dir-label{position:absolute;font-family:var(--font-head);font-size:0.65rem;letter-spacing:2px;color:rgba(0,212,255,0.6);transform:translateY(-50%);}
+.dir-n{top:12px;left:50%;transform:translate(-50%,-50%);}
+.dir-s{bottom:12px;left:50%;transform:translate(-50%,50%);}
+.dir-e{right:12px;top:50%;transform:translateY(-50%);}
+.dir-w{left:12px;top:50%;transform:translateY(-50%);}
+.tonight-planets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:24px;}
+.tonight-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.tonight-card img{width:48px;height:48px;border-radius:50%;object-fit:cover;margin-bottom:8px;border:1px solid var(--border);}
+.tonight-card h4{font-family:var(--font-head);font-size:0.7rem;color:var(--cyan);margin-bottom:4px;}
+.tonight-card p{font-size:0.72rem;color:var(--muted);}
+
+/* ── PLANETARY SCIENCE ── */
+#planets{background:var(--bg3);}
+.planets-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;}
+.ptab{font-family:var(--font-head);font-size:0.65rem;letter-spacing:1.5px;padding:8px 18px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:var(--transition);text-transform:uppercase;}
+.ptab.active,.ptab:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,0.06);}
+.planets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;}
+.planet-card{background:rgba(5,5,26,0.8);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:var(--transition);cursor:pointer;}
+.planet-card:hover{transform:translateY(-6px);border-color:var(--cyan);box-shadow:0 20px 60px rgba(0,212,255,0.15);}
+.planet-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;}
+.planet-card-body{padding:20px;}
+.planet-card-name{font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--cyan);margin-bottom:8px;}
+.planet-card-stats{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.pstat{display:flex;justify-content:space-between;font-size:0.78rem;}
+.pstat-key{color:var(--muted);}
+.pstat-val{color:var(--text);}
+.atmo-bars{margin-top:12px;}
+.atmo-label{font-size:0.7rem;color:var(--muted);margin-bottom:6px;}
+.atmo-bar-wrap{display:flex;flex-direction:column;gap:6px;}
+.atmo-row{display:flex;align-items:center;gap:8px;}
+.atmo-name{font-size:0.68rem;color:var(--muted);width:30px;flex-shrink:0;}
+.atmo-track{flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.atmo-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+.atmo-pct{font-size:0.65rem;color:var(--muted);width:32px;text-align:right;}
+
+/* ── MISSION ARCHIVE ── */
+#missions{background:var(--bg2);}
+.mission-filters{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:32px;}
+.mf-btn{font-family:var(--font-head);font-size:0.6rem;letter-spacing:1.5px;padding:7px 16px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:var(--transition);text-transform:uppercase;}
+.mf-btn.active,.mf-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.mission-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;}
+.mission-card{border-radius:12px;overflow:hidden;border:1px solid var(--border);background:rgba(5,5,26,0.7);cursor:pointer;transition:var(--transition);}
+.mission-card:hover{transform:translateY(-4px);border-color:var(--cyan);}
+.mission-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;}
+.mission-card-body{padding:16px;}
+.mission-date{font-family:var(--font-head);font-size:0.6rem;letter-spacing:2px;color:var(--purple);margin-bottom:6px;}
+.mission-title{font-size:0.9rem;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.4;}
+.mission-excerpt{font-size:0.78rem;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+#lightbox{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;padding:24px;cursor:pointer;}
+#lightbox.open{display:flex;}
+.lightbox-inner{max-width:800px;width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:default;}
+.lightbox-inner img{width:100%;display:block;}
+.lightbox-body{padding:24px;}
+.lightbox-body h3{font-family:var(--font-head);font-size:1rem;color:var(--cyan);margin-bottom:8px;}
+.lightbox-body p{font-size:0.85rem;color:var(--muted);line-height:1.6;}
+#lb-close{position:absolute;top:20px;right:24px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;line-height:1;}
+
+/* ── SKY OBSERVATION ── */
+#skyguide{background:var(--bg);}
+.skyguide-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+.skyguide-card{background:rgba(5,5,26,0.7);border:1px solid var(--border);border-radius:16px;padding:28px;}
+.skyguide-card h3{font-family:var(--font-head);font-size:0.85rem;letter-spacing:2px;color:var(--cyan);margin-bottom:20px;}
+.moon-phase-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+#moon-display{width:150px;height:150px;border-radius:50%;margin:0 auto;border:2px solid var(--border);position:relative;overflow:hidden;}
+.moon-phase-name{font-family:var(--font-head);font-size:0.85rem;color:var(--text);}
+.moon-date-input{width:100%;padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);outline:none;}
+.events-list{display:flex;flex-direction:column;gap:12px;}
+.event-item{display:flex;gap:14px;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid transparent;transition:var(--transition);}
+.event-item:hover{border-color:var(--border);}
+.event-date{font-family:var(--font-head);font-size:0.65rem;color:var(--purple);min-width:70px;line-height:1.4;}
+.event-info h4{font-size:0.82rem;color:var(--text);margin-bottom:2px;}
+.event-info p{font-size:0.72rem;color:var(--muted);}
+.visibility-chart{display:flex;flex-direction:column;gap:10px;}
+.vis-row{display:flex;align-items:center;gap:12px;}
+.vis-planet{font-family:var(--font-head);font-size:0.65rem;color:var(--cyan);width:70px;}
+.vis-bar-track{flex:1;height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;}
+.vis-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--cyan),var(--purple));}
+.vis-status{font-size:0.7rem;color:var(--muted);width:60px;text-align:right;}
+
+/* ── CLIMATE VISUALIZER ── */
+#climate{background:var(--bg3);}
+.climate-layout{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;}
+.greenhouse-wrap{position:relative;background:rgba(5,5,26,0.5);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.greenhouse-wrap h3{font-family:var(--font-head);font-size:0.85rem;letter-spacing:2px;color:var(--cyan);margin-bottom:16px;text-align:center;}
+#greenhouse-svg{width:100%;height:280px;}
+.climate-controls{background:rgba(5,5,26,0.7);border:1px solid var(--border);border-radius:16px;padding:28px;}
+.climate-controls h3{font-family:var(--font-head);font-size:0.85rem;letter-spacing:2px;color:var(--cyan);margin-bottom:20px;}
+.co2-wrap{margin-bottom:24px;}
+.co2-label{display:flex;justify-content:space-between;margin-bottom:8px;font-size:0.8rem;color:var(--muted);}
+#co2Slider{-webkit-appearance:none;width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;outline:none;}
+#co2Slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 10px var(--gold);}
+.temp-display{text-align:center;padding:20px;background:rgba(255,179,64,0.05);border:1px solid rgba(255,179,64,0.2);border-radius:12px;margin-bottom:20px;}
+.temp-value{font-family:var(--font-head);font-size:2.5rem;font-weight:900;color:var(--gold);}
+.temp-label{font-size:0.75rem;color:var(--muted);margin-top:4px;}
+.atmo-compare{display:flex;flex-direction:column;gap:12px;margin-top:20px;}
+.compare-planet{display:flex;flex-direction:column;gap:6px;}
+.compare-name{font-family:var(--font-head);font-size:0.7rem;letter-spacing:1px;color:var(--text);}
+.compare-bar-track{height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden;}
+.compare-bar{height:100%;border-radius:5px;transition:width 1s ease;}
+
+/* ── FOOTER ── */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:40px 24px 24px;text-align:center;}
+.footer-logo{font-family:var(--font-head);font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px;}
+.footer-tagline{color:var(--muted);font-size:0.85rem;margin-bottom:24px;}
+.footer-links{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:24px;}
+.footer-links a{font-family:var(--font-head);font-size:0.65rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;transition:var(--transition);}
+.footer-links a:hover{color:var(--cyan);}
+.footer-copy{font-size:0.75rem;color:rgba(136,146,176,0.5);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .nav-links,.nav-cta{display:none;}
+  .hamburger{display:flex;}
+  .constellation-layout{grid-template-columns:1fr;}
+  .skyguide-grid{grid-template-columns:1fr;}
+  .climate-layout{grid-template-columns:1fr;}
+  .planets-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:600px){
+  section{padding:80px 16px 40px;}
+  .planets-grid{grid-template-columns:1fr;}
+  .mission-grid{grid-template-columns:1fr;}
+  .hero-stats{gap:24px;}
+}
+</style>
+</head>
+<body>
+<!-- LOADING SCREEN -->
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-logo">SKYVERSE</div>
+  <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+  <div class="loader-text">INITIALIZING COSMOS...</div>
+</div>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <div class="nav-logo">&#9679; SKYVERSE</div>
+  <ul class="nav-links">
+    <li><a href="#hero">Home</a></li>
+    <li><a href="#solar-system">Solar System</a></li>
+    <li><a href="#constellations">Constellations</a></li>
+    <li><a href="#starmap">Star Map</a></li>
+    <li><a href="#planets">Planets</a></li>
+    <li><a href="#missions">Missions</a></li>
+    <li><a href="#skyguide">Sky Guide</a></li>
+    <li><a href="#climate">Climate</a></li>
+  </ul>
+  <button class="nav-cta" onclick="document.getElementById('solar-system').scrollIntoView({behavior:'smooth'})">Launch App</button>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#hero">Home</a>
+  <a href="#solar-system">Solar System</a>
+  <a href="#constellations">Constellations</a>
+  <a href="#starmap">Star Map</a>
+  <a href="#planets">Planets</a>
+  <a href="#missions">Missions</a>
+  <a href="#skyguide">Sky Guide</a>
+  <a href="#climate">Climate</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-orbital"></div>
+  <div class="hero-orbital"></div>
+  <div class="hero-orbital"></div>
+  <canvas id="starfield-canvas"></canvas>
+  <div class="hero-content reveal">
+    <div class="hero-badge">Interactive Cosmology &amp; Astronomy Portal</div>
+    <h1 class="hero-title">
+      <span class="line1">Explore the</span>
+      <span class="line2">Universe</span>
+    </h1>
+    <p class="hero-sub">Journey through galaxies, discover distant worlds, and unravel the mysteries of the cosmos through stunning 3D visualization and real astronomical data.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="document.getElementById('solar-system').scrollIntoView({behavior:'smooth'})">&#9654; Launch 3D Solar System</button>
+      <button class="btn-outline" onclick="document.getElementById('planets').scrollIntoView({behavior:'smooth'})">Explore Planets</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num">8</div><div class="hero-stat-label">Planets</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">4.6B</div><div class="hero-stat-label">Years Old</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">88</div><div class="hero-stat-label">Constellations</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">∞</div><div class="hero-stat-label">Stars</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3D SOLAR SYSTEM -->
+<section id="solar-system">
+  <div id="solar-container">
+    <canvas id="three-canvas"></canvas>
+    <div id="solar-overlay">
+      <div class="solar-overlay-content">
+        <div class="pulse"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><polygon points="5,3 19,12 5,21" fill="#00d4ff"/></svg></div>
+        <h3>CLICK TO RUN THE MODEL</h3>
+        <p>Interactive 3D Solar System — Drag to rotate, scroll to zoom</p>
+      </div>
+    </div>
+    <div id="solar-info-panel">
+      <button id="close-panel">&#10005;</button>
+      <img id="panel-img" class="panel-planet-img" src="" alt=""/>
+      <div id="panel-name" class="panel-name"></div>
+      <div id="panel-stats"></div>
+      <div id="panel-fact" class="panel-fact"></div>
+    </div>
+    <div class="planet-labels" id="planet-labels"></div>
+    <div id="solar-controls">
+      <button class="ctrl-btn active" id="btn-orbits">Orbit Paths</button>
+      <button class="ctrl-btn active" id="btn-labels">Labels</button>
+      <div class="speed-wrap">
+        <label>SPEED</label>
+        <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1"/>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONSTELLATION EXPLORER -->
+<section id="constellations" class="reveal">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">Night Sky</div>
+      <h2 class="section-title">Constellation Explorer</h2>
+      <p class="section-sub">Discover the 88 constellations that define our night sky — their stars, mythology, and seasonal visibility.</p>
+    </div>
+    <div class="constellation-layout">
+      <div class="constellation-mapbox">
+        <svg id="const-svg" viewBox="0 0 900 506" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="constellation-sidebar">
+        <input type="text" id="const-search" placeholder="&#128269; Search constellation..."/>
+        <div class="const-list" id="const-list"></div>
+        <div class="const-card" id="const-card">
+          <h3 id="const-card-name"></h3>
+          <p id="const-card-desc"></p>
+          <div class="myth" id="const-card-myth"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 360 STAR MAP -->
+<section id="starmap" class="reveal">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">Live Sky</div>
+      <h2 class="section-title">360° Star Map</h2>
+      <p class="section-sub">Drag to explore tonight's panoramic sky view with cardinal directions and visible planets highlighted.</p>
+    </div>
+    <div class="starmap-wrap">
+      <canvas id="starmap-canvas"></canvas>
+      <div style="position:absolute;top:12px;left:50%;transform:translateX(-50%);font-family:var(--font-head);font-size:0.6rem;letter-spacing:2px;color:rgba(0,212,255,0.5);">N</div>
+      <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-family:var(--font-head);font-size:0.6rem;letter-spacing:2px;color:rgba(0,212,255,0.5);">S</div>
+      <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:var(--font-head);font-size:0.6rem;letter-spacing:2px;color:rgba(0,212,255,0.5);">E</div>
+      <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-family:var(--font-head);font-size:0.6rem;letter-spacing:2px;color:rgba(0,212,255,0.5);">W</div>
+    </div>
+    <div class="tonight-planets" id="tonight-planets"></div>
+  </div>
+</section>
+
+<!-- PLANETARY SCIENCE -->
+<section id="planets" class="reveal">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">Science</div>
+      <h2 class="section-title">Planetary Science Modules</h2>
+      <p class="section-sub">Deep dives into each world — from scorching Mercury to distant Neptune — with real atmospheric data and key statistics.</p>
+    </div>
+    <div class="planets-tabs" id="planets-tabs">
+      <button class="ptab active" data-filter="all">All Planets</button>
+      <button class="ptab" data-filter="terrestrial">Terrestrial</button>
+      <button class="ptab" data-filter="gas">Gas Giants</button>
+      <button class="ptab" data-filter="ice">Ice Giants</button>
+    </div>
+    <div class="planets-grid" id="planets-grid"></div>
+  </div>
+</section>
+
+<!-- MISSION ARCHIVE -->
+<section id="missions" class="reveal">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">NASA APOD</div>
+      <h2 class="section-title">Space Mission Archive</h2>
+      <p class="section-sub">Stunning imagery from NASA's Astronomy Picture of the Day — a curated window into the cosmos.</p>
+    </div>
+    <div class="mission-filters">
+      <button class="mf-btn active" data-cat="all">All</button>
+      <button class="mf-btn" data-cat="galaxy">Galaxies</button>
+      <button class="mf-btn" data-cat="nebula">Nebulae</button>
+      <button class="mf-btn" data-cat="planet">Planets</button>
+    </div>
+    <div class="mission-grid" id="mission-grid">
+      <div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px;font-family:var(--font-head);font-size:0.75rem;letter-spacing:2px;">LOADING FROM NASA API...</div>
+    </div>
+  </div>
+</section>
+
+<!-- SKY OBSERVATION GUIDE -->
+<section id="skyguide" class="reveal">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">Observer's Guide</div>
+      <h2 class="section-title">Sky Observation Guide</h2>
+      <p class="section-sub">Moon phase calculator, celestial events for 2025–2026, and tonight's planet visibility chart.</p>
+    </div>
+    <div class="skyguide-grid">
+      <div class="skyguide-card">
+        <h3>&#9790; Moon Phase Calculator</h3>
+        <div class="moon-phase-wrap">
+          <input type="date" id="moonDate" class="moon-date-input"/>
+          <div id="moon-display"></div>
+          <div class="moon-phase-name" id="moonPhaseName">Full Moon</div>
+          <p style="font-size:0.78rem;color:var(--muted);text-align:center;" id="moonPhaseDesc"></p>
+        </div>
+      </div>
+      <div class="skyguide-card">
+        <h3>&#128336; Celestial Events 2025–2026</h3>
+        <div class="events-list" id="events-list"></div>
+      </div>
+      <div class="skyguide-card" style="grid-column:1/-1;">
+        <h3>&#127756; Planet Visibility — March 2026</h3>
+        <div class="visibility-chart" id="vis-chart"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLIMATE VISUALIZER -->
+<section id="climate" class="reveal">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-badge">Planetary Climate</div>
+      <h2 class="section-title">Atmospheric Climate Visualizer</h2>
+      <p class="section-sub">Adjust CO₂ levels and observe temperature changes. Compare planetary atmospheres across Earth, Venus, and Mars.</p>
+    </div>
+    <div class="climate-layout">
+      <div class="greenhouse-wrap">
+        <h3>&#127774; Greenhouse Effect</h3>
+        <svg id="greenhouse-svg" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="climate-controls">
+        <h3>&#127777; Temperature Control</h3>
+        <div class="co2-wrap">
+          <div class="co2-label">
+            <span>CO₂ Concentration</span>
+            <span id="co2-val">415 ppm</span>
+          </div>
+          <input type="range" id="co2Slider" min="0" max="1000" value="415"/>
+        </div>
+        <div class="temp-display">
+          <div class="temp-value" id="tempValue">15°C</div>
+          <div class="temp-label">Estimated Global Surface Temperature</div>
+        </div>
+        <div class="atmo-compare" id="atmo-compare"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox(event)">
+  <button id="lb-close" onclick="document.getElementById('lightbox').classList.remove('open')">&#10005;</button>
+  <div class="lightbox-inner">
+    <img id="lb-img" src="" alt=""/>
+    <div class="lightbox-body">
+      <h3 id="lb-title"></h3>
+      <p id="lb-desc"></p>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">&#9679; SKYVERSE</div>
+  <p class="footer-tagline">Explore the Universe — One Star at a Time</p>
+  <div class="footer-links">
+    <a href="#hero">Home</a>
+    <a href="#solar-system">Solar System</a>
+    <a href="#constellations">Constellations</a>
+    <a href="#planets">Planets</a>
+    <a href="#missions">Missions</a>
+  </div>
+  <p class="footer-copy">&#169; 2026 SkyVerse. Textures courtesy of Solar System Scope. Imagery from NASA APOD.</p>
+</footer><script>
+// =====================================================
+// PLANET DATA
+// =====================================================
+const PLANET_DATA = [
+  { name:'Mercury', texture:'https://www.solarsystemscope.com/textures/download/2k_mercury.jpg', radius:0.4, orbit:8, speed:4.74, color:'#b5b5b5', type:'terrestrial', diameter:'4,879 km', distance:'57.9M km', moons:0, fact:'Mercury has no atmosphere and surface temperatures swing 600°C between day and night.', atmo:{N2:0,O2:0,CO2:0,H2:100}, atmoLabels:{H2:'42%',Na:'29%',O:'16%',He:'6%'} },
+  { name:'Venus', texture:'https://www.solarsystemscope.com/textures/download/2k_venus_atmosphere.jpg', radius:0.95, orbit:13, speed:3.5, color:'#e8cda0', type:'terrestrial', diameter:'12,104 km', distance:'108.2M km', moons:0, fact:'Venus is the hottest planet at 465°C — hotter than Mercury despite being farther from the Sun.', atmo:{CO2:96.5,N2:3.5,SO2:0.015,H2O:0.002} },
+  { name:'Earth', texture:'https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg', radius:1, orbit:18, speed:2.98, color:'#4fa3e0', type:'terrestrial', diameter:'12,742 km', distance:'149.6M km', moons:1, fact:'Earth is the only known planet to harbor life, with over 8.7 million species discovered so far.', atmo:{N2:78.1,O2:20.9,Ar:0.93,CO2:0.04} },
+  { name:'Mars', texture:'https://www.solarsystemscope.com/textures/download/2k_mars.jpg', radius:0.55, orbit:25, speed:2.41, color:'#c1440e', type:'terrestrial', diameter:'6,779 km', distance:'227.9M km', moons:2, fact:'Olympus Mons on Mars is the largest volcano in the solar system — 3× taller than Mount Everest.', atmo:{CO2:95.3,N2:2.6,Ar:1.9,O2:0.15} },
+  { name:'Jupiter', texture:'https://www.solarsystemscope.com/textures/download/2k_jupiter.jpg', radius:3.5, orbit:38, speed:1.31, color:'#c88b3a', type:'gas', diameter:'139,820 km', distance:'778.5M km', moons:95, fact:'The Great Red Spot is a storm on Jupiter that has been raging for over 350 years.', atmo:{H2:89,He:10,CH4:0.3,NH3:0.026} },
+  { name:'Saturn', texture:'https://www.solarsystemscope.com/textures/download/2k_saturn.jpg', ringTexture:'https://www.solarsystemscope.com/textures/download/2k_saturn_ring_alpha.png', radius:3, orbit:52, speed:0.97, color:'#e4d191', type:'gas', diameter:'116,460 km', distance:'1.43B km', moons:146, fact:'Saturn is so low-density it would float in water — its mean density is 687 kg/m³.', atmo:{H2:96.3,He:3.25,CH4:0.45,NH3:0.01} },
+  { name:'Uranus', texture:'https://www.solarsystemscope.com/textures/download/2k_uranus.jpg', radius:2, orbit:65, speed:0.68, color:'#7de8e8', type:'ice', diameter:'50,724 km', distance:'2.87B km', moons:28, fact:"Uranus rotates on its side with a 98° axial tilt — it rolls around the Sun like a bowling ball.", atmo:{H2:82.5,He:15.2,CH4:2.3} },
+  { name:'Neptune', texture:'https://www.solarsystemscope.com/textures/download/2k_neptune.jpg', radius:1.85, orbit:80, speed:0.54, color:'#5b86e5', type:'ice', diameter:'49,244 km', distance:'4.5B km', moons:16, fact:'Neptune has the fastest winds in the solar system, exceeding 2,100 km/h.', atmo:{H2:80,He:19,CH4:1.5} },
+];
+
+// =====================================================
+// HERO STARFIELD CANVAS
+// =====================================================
+(function initStarfield() {
+  const canvas = document.getElementById('starfield-canvas');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    stars = [];
+    for (let i = 0; i < 320; i++) {
+      stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.8+0.2, a: Math.random(), da: (Math.random()-0.5)*0.005 });
+    }
+  }
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for (const s of stars) {
+      s.a += s.da;
+      if (s.a<=0||s.a>=1) s.da*=-1;
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize',resize);
+  draw();
+})();
+
+// =====================================================
+// THREE.JS SOLAR SYSTEM
+// =====================================================
+(function initSolarSystem() {
+  const canvas = document.getElementById('three-canvas');
+  const container = document.getElementById('solar-container');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.shadowMap.enabled = true;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, container.clientWidth/container.clientHeight, 0.1, 5000);
+  camera.position.set(0, 60, 120);
+  camera.lookAt(0,0,0);
+
+  const loader = new THREE.TextureLoader();
+  loader.crossOrigin = 'anonymous';
+
+  // Milky Way skybox
+  const skyGeo = new THREE.SphereGeometry(1200,32,32);
+  const skyMat = new THREE.MeshBasicMaterial({ map: loader.load('https://www.solarsystemscope.com/textures/download/2k_stars_milky_way.jpg'), side: THREE.BackSide });
+  scene.add(new THREE.Mesh(skyGeo, skyMat));
+
+  // Lighting
+  scene.add(new THREE.AmbientLight(0xffffff, 0.18));
+  const sunLight = new THREE.PointLight(0xfff5e0, 2, 1000);
+  scene.add(sunLight);
+
+  // Ecliptic grid
+  const gridMat = new THREE.LineBasicMaterial({ color: 0x0055aa, opacity: 0.3, transparent: true });
+  const gridGeo = new THREE.BufferGeometry();
+  const gridVerts = [];
+  for (let i=-10;i<=10;i++) {
+    gridVerts.push(-100,0,i*10, 100,0,i*10);
+    gridVerts.push(i*10,0,-100, i*10,0,100);
+  }
+  gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gridVerts,3));
+  scene.add(new THREE.LineSegments(gridGeo,gridMat));
+
+  // Constellation lines (decorative)
+  const constMat = new THREE.LineBasicMaterial({ color: 0x00d4ff, opacity: 0.2, transparent: true });
+  const constGeo = new THREE.BufferGeometry();
+  const constVerts = [];
+  const constPts = [[300,120,-400],[380,180,-350],[450,250,-300],[500,150,-200],[600,80,-350],[580,200,-450],[450,100,-500],[350,50,-420],[-300,100,-380],[-400,200,-300],[-500,80,-400],[-380,150,-500],[-450,250,-200],[-350,300,-100]];
+  for(let i=0;i<constPts.length-1;i+=2) {
+    constVerts.push(...constPts[i],...constPts[i+1]);
+    if(i+3<constPts.length) constVerts.push(...constPts[i+1],...constPts[i+3]);
+  }
+  constGeo.setAttribute('position', new THREE.Float32BufferAttribute(constVerts,3));
+  scene.add(new THREE.LineSegments(constGeo,constMat));
+
+  // SUN
+  const sunGeo = new THREE.SphereGeometry(5, 64, 64);
+  const sunMat = new THREE.MeshBasicMaterial({ map: loader.load('https://www.solarsystemscope.com/textures/download/2k_sun.jpg') });
+  const sun = new THREE.Mesh(sunGeo, sunMat);
+  scene.add(sun);
+
+  // Sun glow sprite
+  const glowTex = (function(){
+    const c=document.createElement('canvas'); c.width=128; c.height=128;
+    const g=c.getContext('2d');
+    const rg=g.createRadialGradient(64,64,0,64,64,64);
+    rg.addColorStop(0,'rgba(255,220,100,0.8)');
+    rg.addColorStop(0.4,'rgba(255,140,0,0.3)');
+    rg.addColorStop(1,'rgba(255,80,0,0)');
+    g.fillStyle=rg; g.fillRect(0,0,128,128);
+    return new THREE.CanvasTexture(c);
+  })();
+  const glowMat = new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, transparent: true });
+  const sunGlow = new THREE.Sprite(glowMat);
+  sunGlow.scale.set(30,30,1);
+  scene.add(sunGlow);
+
+  // Planets + Orbits
+  const planetMeshes = [];
+  const orbitLines = [];
+  let showOrbits = true;
+  let showLabels = true;
+  let speed = 1.0;
+  let planetRunning = false;
+
+  PLANET_DATA.forEach((pd, idx) => {
+    // Orbit ring
+    const orbitPts = [];
+    for(let j=0;j<=128;j++) {
+      const theta = (j/128)*Math.PI*2;
+      orbitPts.push(new THREE.Vector3(Math.cos(theta)*pd.orbit,0,Math.sin(theta)*pd.orbit));
+    }
+    const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPts);
+    const orbitMat = new THREE.LineBasicMaterial({ color: 0x00aaff, opacity: 0.25, transparent: true });
+    const orbitLine = new THREE.Line(orbitGeo, orbitMat);
+    scene.add(orbitLine);
+    orbitLines.push(orbitLine);
+
+    // Planet mesh
+    const geo = new THREE.SphereGeometry(pd.radius, 48, 48);
+    const mat = new THREE.MeshStandardMaterial({ map: loader.load(pd.texture), roughness:0.8, metalness:0.0 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.userData = { ...pd, angle: (idx/8)*Math.PI*2, idx };
+    mesh.castShadow = true;
+    scene.add(mesh);
+    planetMeshes.push(mesh);
+
+    // Earth atmosphere glow
+    if (pd.name === 'Earth') {
+      const atmGeo = new THREE.SphereGeometry(pd.radius*1.06,48,48);
+      const atmMat = new THREE.MeshBasicMaterial({ color:0x4488ff, transparent:true, opacity:0.12, side:THREE.FrontSide });
+      const atm = new THREE.Mesh(atmGeo,atmMat);
+      mesh.add(atm);
+    }
+
+    // Saturn rings
+    if (pd.name === 'Saturn') {
+      const ringGeo = new THREE.RingGeometry(pd.radius*1.3, pd.radius*2.4, 64);
+      const ringMat = new THREE.MeshBasicMaterial({ map: loader.load(pd.ringTexture), side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+      // Fix ring UV
+      const pos = ringGeo.attributes.position;
+      const uv = ringGeo.attributes.uv;
+      for(let i=0;i<pos.count;i++){
+        const v = new THREE.Vector3().fromBufferAttribute(pos,i);
+        uv.setXY(i,(v.length()-pd.radius*1.3)/(pd.radius*1.1), 0);
+      }
+      const ring = new THREE.Mesh(ringGeo,ringMat);
+      ring.rotation.x = -Math.PI/2.5;
+      mesh.add(ring);
+    }
+
+    // Uranus rings
+    if (pd.name === 'Uranus') {
+      const ringGeo = new THREE.RingGeometry(pd.radius*1.2, pd.radius*1.8, 64);
+      const ringMat = new THREE.MeshBasicMaterial({ color:0x7de8e8, side:THREE.DoubleSide, transparent:true, opacity:0.35 });
+      const ring = new THREE.Mesh(ringGeo,ringMat);
+      ring.rotation.x = Math.PI/2;
+      mesh.add(ring);
+    }
+  });
+
+  // Label elements
+  const labelContainer = document.getElementById('planet-labels');
+  const labelEls = planetMeshes.map(m => {
+    const el = document.createElement('div');
+    el.className = 'planet-label';
+    el.textContent = m.userData.name.toUpperCase();
+    labelContainer.appendChild(el);
+    return el;
+  });
+
+  // OrbitControls (manual implementation)
+  let isDragging = false, isRightDrag = false;
+  let prevMouse = {x:0,y:0};
+  let spherical = { theta: -0.5, phi: 0.9, radius: 140 };
+  let panOffset = {x:0,y:0};
+
+  function updateCamera() {
+    camera.position.set(
+      panOffset.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta),
+      panOffset.y + spherical.radius * Math.cos(spherical.phi),
+      spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta)
+    );
+    camera.lookAt(panOffset.x, panOffset.y, 0);
+  }
+
+  canvas.addEventListener('mousedown', e => { isDragging=true; isRightDrag=(e.button===2); prevMouse={x:e.clientX,y:e.clientY}; e.preventDefault(); });
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+  window.addEventListener('mouseup',()=>isDragging=false);
+  window.addEventListener('mousemove', e => {
+    if(!isDragging) return;
+    const dx=(e.clientX-prevMouse.x)*0.005, dy=(e.clientY-prevMouse.y)*0.005;
+    if(isRightDrag) { panOffset.x-=dx*20; panOffset.y+=dy*20; }
+    else { spherical.theta-=dx; spherical.phi=Math.max(0.15,Math.min(Math.PI-0.15,spherical.phi+dy)); }
+    prevMouse={x:e.clientX,y:e.clientY};
+    updateCamera();
+  });
+  canvas.addEventListener('wheel', e => {
+    spherical.radius=Math.max(20,Math.min(400,spherical.radius+e.deltaY*0.15));
+    updateCamera(); e.preventDefault();
+  },{passive:false});
+
+  // Touch support
+  let lastTouch=null,lastPinchDist=null;
+  canvas.addEventListener('touchstart',e=>{ if(e.touches.length===1) lastTouch={x:e.touches[0].clientX,y:e.touches[0].clientY}; e.preventDefault();},{passive:false});
+  canvas.addEventListener('touchmove',e=>{
+    if(e.touches.length===1&&lastTouch){
+      const dx=(e.touches[0].clientX-lastTouch.x)*0.007,dy=(e.touches[0].clientY-lastTouch.y)*0.007;
+      spherical.theta-=dx; spherical.phi=Math.max(0.15,Math.min(Math.PI-0.15,spherical.phi+dy));
+      lastTouch={x:e.touches[0].clientX,y:e.touches[0].clientY};
+      updateCamera();
+    }else if(e.touches.length===2){
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      if(lastPinchDist) spherical.radius=Math.max(20,Math.min(400,spherical.radius-(d-lastPinchDist)*0.4));
+      lastPinchDist=d; updateCamera();
+    }
+    e.preventDefault();
+  },{passive:false});
+  canvas.addEventListener('touchend',()=>{lastTouch=null;lastPinchDist=null;});
+
+  updateCamera();
+
+  // Raycaster for click
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  canvas.addEventListener('click', e => {
+    if(!planetRunning) return;
+    const rect=canvas.getBoundingClientRect();
+    mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+    mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+    const hits=raycaster.intersectObjects(planetMeshes);
+    if(hits.length>0) showPlanetInfo(hits[0].object.userData);
+  });
+
+  // Info panel
+  function showPlanetInfo(pd) {
+    document.getElementById('panel-img').src=pd.texture;
+    document.getElementById('panel-name').textContent=pd.name;
+    const stats=document.getElementById('panel-stats');
+    stats.innerHTML=['Diameter','Distance','Moons'].map((k,i)=>`<div class="panel-stat"><span class="panel-stat-label">${k}</span><span class="panel-stat-value">${[pd.diameter,pd.distance,pd.moons][i]}</span></div>`).join('');
+    document.getElementById('panel-fact').textContent=pd.fact;
+    document.getElementById('solar-info-panel').classList.add('show');
+  }
+  document.getElementById('close-panel').addEventListener('click',()=>document.getElementById('solar-info-panel').classList.remove('show'));
+
+  // Controls
+  document.getElementById('btn-orbits').addEventListener('click',function(){
+    showOrbits=!showOrbits;
+    this.classList.toggle('active',showOrbits);
+    orbitLines.forEach(l=>l.visible=showOrbits);
+  });
+  document.getElementById('btn-labels').addEventListener('click',function(){
+    showLabels=!showLabels;
+    this.classList.toggle('active',showLabels);
+    labelEls.forEach(el=>el.style.opacity=showLabels?'1':'0');
+  });
+  document.getElementById('speedSlider').addEventListener('input',function(){speed=parseFloat(this.value);});
+
+  // Start overlay
+  document.getElementById('solar-overlay').addEventListener('click',function(){
+    planetRunning=true;
+    this.classList.add('hidden');
+  });
+
+  // Animation
+  let clock = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    if(planetRunning) {
+      clock += 0.008 * speed;
+      sun.rotation.y += 0.002 * speed;
+      planetMeshes.forEach(m => {
+        m.userData.angle += (m.userData.speed/200) * speed;
+        m.position.x = Math.cos(m.userData.angle) * m.userData.orbit;
+        m.position.z = Math.sin(m.userData.angle) * m.userData.orbit;
+        m.rotation.y += 0.005 * speed;
+      });
+    }
+
+    // Update labels
+    if(showLabels) {
+      const w=container.clientWidth, h=container.clientHeight;
+      planetMeshes.forEach((m,i) => {
+        const v=m.position.clone().project(camera);
+        const x=(v.x*0.5+0.5)*w, y=(-v.y*0.5+0.5)*h;
+        labelEls[i].style.left=x+'px';
+        labelEls[i].style.top=y+'px';
+      });
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    renderer.setSize(container.clientWidth,container.clientHeight);
+    camera.aspect=container.clientWidth/container.clientHeight;
+    camera.updateProjectionMatrix();
+  });
+})();
+// =====================================================
+// CONSTELLATION EXPLORER
+// =====================================================
+(function initConstellations() {
+  const CONSTELLATIONS = [
+    { name:'Orion', season:'Winter', myth:'The great hunter Orion was set among the stars by Zeus after being slain by Artemis.', desc:'One of the most recognizable constellations, containing the bright stars Betelgeuse and Rigel.',
+      stars:[[350,280],[420,260],[390,300],[440,310],[380,340],[350,350],[420,350],[370,220],[450,230]], lines:[[0,1],[2,3],[4,5],[4,6],[4,2],[7,0],[8,1]] },
+    { name:'Ursa Major', season:'Year-round (N)', myth:'Zeus transformed Callisto into a bear and placed her in the stars to protect her from harm.', desc:'The Great Bear contains the famous Big Dipper asterism, a pointer to Polaris.',
+      stars:[[100,180],[160,175],[200,190],[240,185],[280,200],[310,220],[350,210],[260,240],[310,260]], lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,4],[4,7],[7,8]] },
+    { name:'Cassiopeia', season:'Autumn/Winter', myth:'Cassiopeia, vain queen of Ethiopia, claimed her beauty surpassed the Nereids.', desc:'Shaped like a W or M, Cassiopeia is circumpolar and visible year-round from northern latitudes.',
+      stars:[[600,120],[650,160],[700,130],[750,170],[800,130]], lines:[[0,1],[1,2],[2,3],[3,4]] },
+    { name:'Leo', season:'Spring', myth:'Heracles slew the Nemean Lion as his first labor; Zeus honored it with stars.', desc:'Leo the Lion is prominent in spring skies, anchored by the bright star Regulus.',
+      stars:[[500,300],[530,280],[560,250],[590,260],[620,280],[600,320],[550,330],[510,330]], lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,0]] },
+    { name:'Scorpius', season:'Summer', myth:'Artemis sent the scorpion to slay Orion; both were placed on opposite sides of the sky.', desc:'A dramatic S-shaped constellation containing Antares, a red supergiant star.',
+      stars:[[700,350],[730,370],[760,390],[780,420],[770,450],[750,470],[730,490],[750,510],[780,520]], lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]] },
+    { name:'Gemini', season:'Winter/Spring', myth:'Castor and Pollux, twin sons of Zeus, were transformed into stars after death.', desc:'The Twins stand high in winter skies, marked by the bright pair Castor and Pollux.',
+      stars:[[250,200],[280,180],[270,240],[300,220],[290,260],[310,280]], lines:[[0,2],[1,3],[2,4],[3,5],[0,1],[4,5]] },
+    { name:'Aquila', season:'Summer', myth:"Zeus's eagle that carried thunderbolts across the sky was honored in the stars.", desc:'The Eagle constellation contains Altair, one corner of the Summer Triangle.',
+      stars:[[550,200],[580,220],[560,240],[600,240],[570,260]], lines:[[0,1],[1,2],[1,3],[2,4],[3,4]] },
+    { name:'Perseus', season:'Autumn', myth:'Perseus slew Medusa and rescued Andromeda; his celestial form bears the Gorgon\'s head.', desc:'Perseus contains the famous variable star Algol and the Double Cluster.',
+      stars:[[650,200],[680,180],[710,200],[700,230],[730,240],[670,240]], lines:[[0,1],[1,2],[2,3],[3,4],[3,5],[0,5]] },
+    { name:'Lyra', season:'Summer', myth:"Orpheus's lyre was placed in the heavens after his death by the Muses.", desc:'Small but bright, Lyra contains Vega — the brightest star in the Summer Triangle.',
+      stars:[[750,200],[780,180],[760,220],[790,230],[770,240]], lines:[[0,1],[0,2],[0,3],[2,4],[3,4]] },
+    { name:'Taurus', season:'Winter', myth:'Zeus disguised himself as a bull to carry Europa across the sea to Crete.', desc:'Taurus hosts the Pleiades star cluster and the Hyades, with bright Aldebaran as its eye.',
+      stars:[[200,280],[230,260],[260,270],[250,300],[280,290],[300,260],[320,250]], lines:[[0,1],[1,2],[2,3],[2,4],[4,5],[5,6]] },
+    { name:'Cygnus', season:'Summer/Autumn', myth:'Zeus disguised himself as a swan to approach Leda; the swan was immortalized in stars.', desc:'The Northern Cross, with supergiant Deneb at its tail, anchors the Summer Triangle.',
+      stars:[[600,150],[640,180],[620,210],[660,200],[640,220],[680,230]], lines:[[0,1],[1,2],[1,3],[3,4],[3,5]] },
+    { name:'Andromeda', season:'Autumn', myth:'Chained to a rock as sacrifice to Cetus, Andromeda was rescued by Perseus.', desc:'Andromeda houses the nearest large galaxy visible to the naked eye — M31.',
+      stars:[[750,280],[780,260],[810,280],[840,300],[820,260],[840,250]], lines:[[0,1],[1,2],[2,3],[1,4],[4,5]] },
+  ];
+
+  const svg = document.getElementById('const-svg');
+  const listEl = document.getElementById('const-list');
+  const card = document.getElementById('const-card');
+  let activeIdx = -1;
+
+  // Background stars
+  for(let i=0;i<200;i++) {
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',Math.random()*900); c.setAttribute('cy',Math.random()*506);
+    const r=Math.random()*1.5+0.3;
+    c.setAttribute('r',r); c.setAttribute('fill',`rgba(255,255,255,${0.2+Math.random()*0.5})`);
+    svg.appendChild(c);
+  }
+
+  // Draw constellations on SVG
+  const groups = CONSTELLATIONS.map((con,i) => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.cursor='pointer'; g.style.transition='opacity 0.3s';
+
+    // Lines
+    con.lines.forEach(([a,b]) => {
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',con.stars[a][0]); line.setAttribute('y1',con.stars[a][1]);
+      line.setAttribute('x2',con.stars[b][0]); line.setAttribute('y2',con.stars[b][1]);
+      line.setAttribute('stroke','rgba(0,212,255,0.45)'); line.setAttribute('stroke-width','1.2');
+      g.appendChild(line);
+    });
+
+    // Stars
+    con.stars.forEach(([x,y]) => {
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r','3');
+      c.setAttribute('fill','#e0f0ff'); c.setAttribute('filter','url(#glow)');
+      g.appendChild(c);
+    });
+
+    // Label
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    const cx=con.stars.reduce((s,p)=>s+p[0],0)/con.stars.length;
+    const cy=con.stars.reduce((s,p)=>s+p[1],0)/con.stars.length;
+    txt.setAttribute('x',cx); txt.setAttribute('y',cy-12);
+    txt.setAttribute('fill','rgba(0,212,255,0.5)'); txt.setAttribute('font-size','9');
+    txt.setAttribute('font-family','Orbitron'); txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('letter-spacing','2');
+    txt.textContent=con.name.toUpperCase();
+    g.appendChild(txt);
+
+    g.addEventListener('click',()=>selectConst(i));
+    svg.appendChild(g);
+    return g;
+  });
+
+  // SVG filter
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML='<filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+  svg.insertBefore(defs,svg.firstChild);
+
+  function selectConst(i) {
+    activeIdx=i;
+    groups.forEach((g,j)=>g.style.opacity=j===i?'1':'0.3');
+    const con=CONSTELLATIONS[i];
+    document.getElementById('const-card-name').textContent=con.name;
+    document.getElementById('const-card-desc').textContent=con.desc;
+    document.getElementById('const-card-myth').textContent='Mythology: '+con.myth;
+    card.classList.add('show');
+    document.querySelectorAll('.const-item').forEach((el,j)=>el.classList.toggle('active',j===i));
+  }
+
+  // Sidebar list
+  CONSTELLATIONS.forEach((con,i) => {
+    const el=document.createElement('div');
+    el.className='const-item';
+    el.innerHTML=`<div class="const-item-name">${con.name}</div><div class="const-item-season">${con.season}</div>`;
+    el.addEventListener('click',()=>selectConst(i));
+    listEl.appendChild(el);
+  });
+
+  // Search
+  document.getElementById('const-search').addEventListener('input',function(){
+    const q=this.value.toLowerCase();
+    document.querySelectorAll('.const-item').forEach((el,i)=>{
+      el.style.display=CONSTELLATIONS[i].name.toLowerCase().includes(q)?'block':'none';
+    });
+  });
+})();
+
+// =====================================================
+// 360° STAR MAP
+// =====================================================
+(function initStarMap() {
+  const canvas=document.getElementById('starmap-canvas');
+  const ctx=canvas.getContext('2d');
+  let offset=0, dragging=false, startX=0;
+
+  function resize() {
+    canvas.width=canvas.parentElement.clientWidth;
+    canvas.height=canvas.parentElement.clientHeight||500;
+  }
+  resize(); window.addEventListener('resize',()=>{resize();draw();});
+
+  const stars=[];
+  for(let i=0;i<600;i++) stars.push({x:Math.random()*2000,y:Math.random()*500,r:Math.random()*1.8+0.2,a:0.3+Math.random()*0.7,twinkle:Math.random()*Math.PI*2});
+
+  const PLANET_VIS = [
+    {name:'Venus',x:200,y:180,color:'#fffacd',r:5,bright:true},
+    {name:'Jupiter',x:550,y:220,color:'#c88b3a',r:4,bright:true},
+    {name:'Mars',x:900,y:160,color:'#c1440e',r:3.5,bright:false},
+    {name:'Saturn',x:1300,y:240,color:'#e4d191',r:3,bright:false},
+  ];
+
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // Sky gradient
+    const grad=ctx.createLinearGradient(0,0,0,canvas.height);
+    grad.addColorStop(0,'#00000f'); grad.addColorStop(0.5,'#03030f'); grad.addColorStop(1,'#060618');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Milky Way band
+    ctx.save();
+    const mwGrad=ctx.createLinearGradient(0,canvas.height*0.3,0,canvas.height*0.7);
+    mwGrad.addColorStop(0,'rgba(255,255,255,0)');
+    mwGrad.addColorStop(0.5,'rgba(200,200,255,0.04)');
+    mwGrad.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=mwGrad; ctx.fillRect(0,canvas.height*0.2,canvas.width,canvas.height*0.6);
+    ctx.restore();
+
+    // Stars
+    const t=Date.now()/2000;
+    stars.forEach(s=>{
+      const x=(s.x-offset)%2000;const dx=x<0?x+2000:x;
+      const sc=(canvas.width/2000);
+      const sx=dx*sc;
+      const twink=s.a*(0.7+0.3*Math.sin(t+s.twinkle));
+      ctx.beginPath(); ctx.arc(sx,s.y*(canvas.height/500),s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${twink})`; ctx.fill();
+    });
+
+    // Planets
+    PLANET_VIS.forEach(p=>{
+      const x=((p.x-offset)%2000+2000)%2000;
+      const sx=(x/2000)*canvas.width;
+      if(p.bright){
+        const glow=ctx.createRadialGradient(sx,p.y,0,sx,p.y,p.r*4);
+        glow.addColorStop(0,p.color+'cc'); glow.addColorStop(1,'transparent');
+        ctx.beginPath(); ctx.arc(sx,p.y,p.r*4,0,Math.PI*2);
+        ctx.fillStyle=glow; ctx.fill();
+      }
+      ctx.beginPath(); ctx.arc(sx,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.color; ctx.fill();
+      ctx.font='10px Orbitron'; ctx.fillStyle='rgba(0,212,255,0.7)';
+      ctx.fillText(p.name,sx+p.r+4,p.y+4);
+    });
+
+    // Horizon line
+    ctx.strokeStyle='rgba(0,212,255,0.15)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,canvas.height*0.75); ctx.lineTo(canvas.width,canvas.height*0.75); ctx.stroke();
+
+    requestAnimationFrame(draw);
+  }
+
+  canvas.addEventListener('mousedown',e=>{dragging=true;startX=e.clientX;});
+  window.addEventListener('mouseup',()=>dragging=false);
+  window.addEventListener('mousemove',e=>{if(dragging){offset+=e.movementX*-0.5;draw();}});
+  canvas.addEventListener('touchstart',e=>{dragging=true;startX=e.touches[0].clientX;});
+  canvas.addEventListener('touchmove',e=>{if(dragging){const dx=e.touches[0].clientX-startX;offset-=dx*0.5;startX=e.touches[0].clientX;}e.preventDefault();},{passive:false});
+  canvas.addEventListener('touchend',()=>dragging=false);
+
+  draw();
+
+  // Tonight planets cards
+  const tonightEl=document.getElementById('tonight-planets');
+  const TEXTURES={Venus:'https://www.solarsystemscope.com/textures/download/2k_venus_atmosphere.jpg',Jupiter:'https://www.solarsystemscope.com/textures/download/2k_jupiter.jpg',Mars:'https://www.solarsystemscope.com/textures/download/2k_mars.jpg',Saturn:'https://www.solarsystemscope.com/textures/download/2k_saturn.jpg'};
+  PLANET_VIS.forEach(p=>{
+    tonightEl.innerHTML+=`<div class="tonight-card"><img src="${TEXTURES[p.name]}" alt="${p.name}"/><h4>${p.name}</h4><p>Visible ${p.bright?'(Very Bright)':'at night'}</p></div>`;
+  });
+})();
+// =====================================================
+// PLANETARY SCIENCE MODULES
+// =====================================================
+(function initPlanets() {
+  const grid=document.getElementById('planets-grid');
+  const ATMO_COLORS=['#00d4ff','#7b2fff','#ffb340','#ff4d8d','#4ade80','#60a5fa'];
+
+  function renderCards(filter) {
+    grid.innerHTML='';
+    PLANET_DATA.filter(p=>filter==='all'||p.type===filter).forEach(pd=>{
+      const atmoKeys=Object.keys(pd.atmo||{});
+      const atmoVals=Object.values(pd.atmo||{});
+      const max=Math.max(...atmoVals,1);
+      const atmoBars=atmoKeys.map((k,i)=>`
+        <div class="atmo-row">
+          <span class="atmo-name">${k}</span>
+          <div class="atmo-track"><div class="atmo-fill" style="width:${(atmoVals[i]/max)*100}%;background:${ATMO_COLORS[i%ATMO_COLORS.length]}"></div></div>
+          <span class="atmo-pct">${atmoVals[i]}%</span>
+        </div>`).join('');
+
+      grid.innerHTML+=`
+        <div class="planet-card">
+          <img class="planet-card-img" src="${pd.texture}" alt="${pd.name}" loading="lazy"/>
+          <div class="planet-card-body">
+            <div class="planet-card-name">${pd.name}</div>
+            <div class="planet-card-stats">
+              <div class="pstat"><span class="pstat-key">Diameter</span><span class="pstat-val">${pd.diameter}</span></div>
+              <div class="pstat"><span class="pstat-key">Distance</span><span class="pstat-val">${pd.distance}</span></div>
+              <div class="pstat"><span class="pstat-key">Moons</span><span class="pstat-val">${pd.moons}</span></div>
+              <div class="pstat"><span class="pstat-key">Type</span><span class="pstat-val">${pd.type.charAt(0).toUpperCase()+pd.type.slice(1)}</span></div>
+            </div>
+            <div class="atmo-bars"><div class="atmo-label">Atmosphere Composition</div><div class="atmo-bar-wrap">${atmoBars}</div></div>
+          </div>
+        </div>`;
+    });
+  }
+
+  renderCards('all');
+  document.querySelectorAll('.ptab').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+      this.classList.add('active');
+      renderCards(this.dataset.filter);
+    });
+  });
+})();
+
+// =====================================================
+// NASA APOD
+// =====================================================
+(function initMissions() {
+  const grid=document.getElementById('mission-grid');
+  const FALLBACK=[
+    {title:'Pillars of Creation',date:'2025-02-10',explanation:'The Eagle Nebula\'s iconic pillars are columns of cool hydrogen gas and dust that serve as incubators for new stars.',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg/800px-Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg',hdurl:'',media_type:'image'},
+    {title:'Andromeda Galaxy',date:'2025-03-15',explanation:'The Andromeda Galaxy, 2.5 million light-years away, is the nearest large galaxy to the Milky Way and contains 1 trillion stars.',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Andromeda_Galaxy_%28with_h-alpha%29.jpg/800px-Andromeda_Galaxy_%28with_h-alpha%29.jpg',hdurl:'',media_type:'image'},
+    {title:'Crab Nebula',date:'2025-01-22',explanation:'The Crab Nebula is the remnant of a supernova explosion recorded by Chinese astronomers in 1054 AD, now spanning 11 light-years.',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Crab_Nebula.jpg/800px-Crab_Nebula.jpg',hdurl:'',media_type:'image'},
+    {title:'Saturn\'s Rings',date:'2025-04-05',explanation:'Saturn\'s iconic rings span 282,000 km but are only about 30 meters thick on average, composed mainly of ice and rock.',url:'https://www.solarsystemscope.com/textures/download/2k_saturn.jpg',hdurl:'',media_type:'image'},
+    {title:'Jupiter\'s Great Red Spot',date:'2025-05-18',explanation:'The Great Red Spot is a persistent anticyclonic storm larger than Earth that has existed for at least 350 years.',url:'https://www.solarsystemscope.com/textures/download/2k_jupiter.jpg',hdurl:'',media_type:'image'},
+    {title:'Mars Opposition',date:'2025-06-30',explanation:'Mars reaches opposition when Earth passes directly between the Sun and the Red Planet, making it the brightest object in the night sky.',url:'https://www.solarsystemscope.com/textures/download/2k_mars.jpg',hdurl:'',media_type:'image'},
+    {title:'Milky Way Core',date:'2025-07-12',explanation:'The center of our galaxy, 26,000 light-years away, hosts a supermassive black hole called Sagittarius A* with 4 million solar masses.',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/ESO-VLT-Laser-phot-0a-99.jpg/800px-ESO-VLT-Laser-phot-0a-99.jpg',hdurl:'',media_type:'image'},
+    {title:'Hubble Deep Field',date:'2025-08-20',explanation:'The Hubble Deep Field image, taken over 10 days, revealed nearly 3,000 galaxies in a patch of sky the size of a grain of sand.',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/HubbleDeepField.800px.jpg/800px-HubbleDeepField.800px.jpg',hdurl:'',media_type:'image'},
+    {title:'Solar Eclipse',date:'2025-09-01',explanation:'A total solar eclipse occurs when the Moon completely blocks the Sun, revealing the corona and turning day briefly into night.',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Solar_eclips_1999_1.jpg/800px-Solar_eclips_1999_1.jpg',hdurl:'',media_type:'image'},
+    {title:'Northern Lights',date:'2025-10-15',explanation:'Aurora Borealis occurs when solar wind particles collide with Earth\'s atmosphere, creating stunning curtains of green, pink, and purple light.',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Polarlicht_2.jpg/800px-Polarlicht_2.jpg',hdurl:'',media_type:'image'},
+    {title:'Orion Nebula',date:'2025-11-28',explanation:'The Orion Nebula, 1,344 light-years away, is one of the most photographed objects in the night sky — a stellar nursery.',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Orion_Nebula_-_Hubble_2006_mosaic_18000.jpg/800px-Orion_Nebula_-_Hubble_2006_mosaic_18000.jpg',hdurl:'',media_type:'image'},
+    {title:'International Space Station',date:'2025-12-10',explanation:'The ISS orbits Earth at 400 km altitude at 27,600 km/h, completing 15.5 orbits per day with a crew of 7 astronauts.',url:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/International_Space_Station_after_undocking_of_STS-132.jpg/800px-International_Space_Station_after_undocking_of_STS-132.jpg',hdurl:'',media_type:'image'},
+  ];
+
+  function renderCards(items) {
+    grid.innerHTML=items.filter(i=>i.media_type==='image').map(i=>`
+      <div class="mission-card" onclick="openLightbox('${i.url.replace(/'/g,"\\'")}','${i.title.replace(/'/g,"\\'")}','${(i.explanation||'').substring(0,200).replace(/'/g,"\\'")}...')">
+        <img src="${i.url}" alt="${i.title}" loading="lazy" onerror="this.src='https://www.solarsystemscope.com/textures/download/2k_stars_milky_way.jpg'"/>
+        <div class="mission-card-body">
+          <div class="mission-date">${i.date}</div>
+          <div class="mission-title">${i.title}</div>
+          <div class="mission-excerpt">${i.explanation||''}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  fetch('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=12')
+    .then(r=>r.json()).then(data=>{if(Array.isArray(data)&&data.length>0)renderCards(data);else renderCards(FALLBACK);})
+    .catch(()=>renderCards(FALLBACK));
+
+  document.querySelectorAll('.mf-btn').forEach(btn=>{
+    btn.addEventListener('click',function(){document.querySelectorAll('.mf-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');});
+  });
+})();
+
+window.openLightbox=function(url,title,desc){
+  document.getElementById('lb-img').src=url;
+  document.getElementById('lb-title').textContent=title;
+  document.getElementById('lb-desc').textContent=desc;
+  document.getElementById('lightbox').classList.add('open');
+};
+window.closeLightbox=function(e){if(e.target===document.getElementById('lightbox'))document.getElementById('lightbox').classList.remove('open');};
+
+// =====================================================
+// SKY OBSERVATION GUIDE
+// =====================================================
+(function initSkyGuide() {
+  // Moon phase calculator
+  const MOON_PHASES=['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
+  const MOON_DESCS={
+    'New Moon':'The Moon is between Earth and Sun — invisible from Earth. A new cycle begins.',
+    'Waxing Crescent':'A slim crescent visible in the western sky after sunset.',
+    'First Quarter':'Half the Moon illuminated — rises at noon, sets at midnight.',
+    'Waxing Gibbous':'More than half illuminated, growing toward full. Excellent for observing craters.',
+    'Full Moon':'The entire lunar face illuminated. Rises at sunset, sets at sunrise.',
+    'Waning Gibbous':'More than half lit, shrinking. Rises after sunset.',
+    'Last Quarter':'Half illuminated, visible in the eastern sky before dawn.',
+    'Waning Crescent':'Slim crescent in eastern sky before sunrise. Cycle nearing end.',
+  };
+
+  function getMoonPhase(date) {
+    const d=new Date(date); const known=new Date('2000-01-06');
+    const diff=(d-known)/(1000*60*60*24);
+    const cycle=diff%29.53059; const idx=Math.floor((cycle/29.53059)*8)%8;
+    return {phase:MOON_PHASES[idx<0?idx+8:idx],illumination:Math.round(Math.abs(Math.cos((cycle/29.53059)*2*Math.PI)*100))};
+  }
+
+  function drawMoon(phase) {
+    const el=document.getElementById('moon-display');
+    el.style.background='';
+    const phaseIdx=MOON_PHASES.indexOf(phase);
+    const canvas=document.createElement('canvas');canvas.width=150;canvas.height=150;
+    const ctx=canvas.getContext('2d');
+    // Dark side
+    ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(75,75,72,0,Math.PI*2);ctx.fill();
+    // Lit side based on phase
+    const pct=phaseIdx/8;
+    if(phaseIdx>=0&&phaseIdx<=4){
+      ctx.fillStyle='#d0d0c0';ctx.beginPath();ctx.arc(75,75,72,0,Math.PI*2);ctx.fill();
+      if(phaseIdx<4){ctx.fillStyle='#1a1a2e';const x=phaseIdx<2?75:75-100;ctx.beginPath();ctx.ellipse(75,75,72*(phaseIdx<2?1-phaseIdx/2:phaseIdx/2-1),72,0,0,Math.PI*2);ctx.fill();}
+    } else {
+      ctx.save();ctx.globalAlpha=1;ctx.fillStyle='#d0d0c0';ctx.beginPath();ctx.arc(75,75,72,-Math.PI/2,Math.PI/2);ctx.fill();
+      ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(75,75,72,Math.PI/2,Math.PI*1.5);ctx.fill();ctx.restore();
+    }
+    // Crater texture
+    ctx.fillStyle='rgba(0,0,0,0.08)';[[50,60,8],[90,45,5],[65,90,6],[100,80,4],[40,100,5]].forEach(([x,y,r])=>{ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();});
+    el.style.backgroundImage=`url(${canvas.toDataURL()})`;
+    el.style.backgroundSize='cover';
+  }
+
+  const moonInput=document.getElementById('moonDate');
+  const today=new Date();
+  moonInput.value=today.toISOString().split('T')[0];
+
+  function updateMoon(val) {
+    const {phase,illumination}=getMoonPhase(val);
+    document.getElementById('moonPhaseName').textContent=`${phase} (${illumination}% lit)`;
+    document.getElementById('moonPhaseDesc').textContent=MOON_DESCS[phase]||'';
+    drawMoon(phase);
+  }
+  moonInput.addEventListener('change',e=>updateMoon(e.target.value));
+  updateMoon(moonInput.value);
+
+  // Events
+  const EVENTS=[
+    {date:'Mar 29, 2026',name:'Total Lunar Eclipse',desc:'Totality visible from North America, Europe, Africa'},
+    {date:'Apr 8, 2026',name:'Mercury at Greatest Elongation',desc:'Best time to observe Mercury, 27° from Sun'},
+    {date:'May 5, 2026',name:'Eta Aquarid Meteor Shower',desc:'Peak rate ~50 meteors/hr from Halley\'s Comet debris'},
+    {date:'Jun 21, 2026',name:'Summer Solstice',desc:'Longest day of the year in the Northern Hemisphere'},
+    {date:'Jul 12, 2026',name:'Mars Opposition',desc:'Mars closest to Earth, magnitude -2.8'},
+    {date:'Aug 12, 2026',name:'Perseid Meteor Shower',desc:'Peak 100 meteors/hr from Swift-Tuttle Comet debris'},
+    {date:'Sep 22, 2026',name:'Autumnal Equinox',desc:'Day and night of equal length worldwide'},
+    {date:'Nov 17, 2026',name:'Leonid Meteor Shower',desc:'Occasional storm years with 1000+ meteors/hr'},
+    {date:'Dec 13, 2026',name:'Geminid Meteor Shower',desc:'The year\'s best shower — up to 120 meteors/hr'},
+    {date:'Dec 21, 2026',name:'Winter Solstice + Jupiter Conjunction',desc:'Shortest day; Jupiter and Moon meet in the sky'},
+  ];
+  const evList=document.getElementById('events-list');
+  EVENTS.forEach(e=>{
+    evList.innerHTML+=`<div class="event-item"><div class="event-date">${e.date}</div><div class="event-info"><h4>${e.name}</h4><p>${e.desc}</p></div></div>`;
+  });
+
+  // Visibility chart
+  const VIS=[
+    {planet:'Venus',pct:85,status:'Excellent'},
+    {planet:'Jupiter',pct:70,status:'Good'},
+    {planet:'Mars',pct:55,status:'Moderate'},
+    {planet:'Saturn',pct:40,status:'Fair'},
+    {planet:'Mercury',pct:20,status:'Difficult'},
+    {planet:'Uranus',pct:30,status:'Binoculars'},
+  ];
+  const visEl=document.getElementById('vis-chart');
+  VIS.forEach(v=>{
+    visEl.innerHTML+=`<div class="vis-row"><div class="vis-planet">${v.planet}</div><div class="vis-bar-track"><div class="vis-bar" style="width:${v.pct}%"></div></div><div class="vis-status">${v.status}</div></div>`;
+  });
+})();
+
+// =====================================================
+// GREENHOUSE SVG
+// =====================================================
+(function initGreenhouse() {
+  const svg=document.getElementById('greenhouse-svg');
+  svg.innerHTML=`
+    <defs>
+      <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#0a0a2a" id="skyTop"/>
+        <stop offset="100%" stop-color="#1a0a3a" id="skyBot"/>
+      </linearGradient>
+      <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
+    </defs>
+    <!-- Sky -->
+    <rect width="400" height="280" fill="url(#skyGrad)" rx="8"/>
+    <!-- Ground -->
+    <rect x="0" y="220" width="400" height="60" fill="#1a3a1a" rx="4"/>
+    <!-- Sun -->
+    <circle cx="340" cy="50" r="28" fill="#ffb340" opacity="0.9"/>
+    <circle cx="340" cy="50" r="40" fill="rgba(255,179,64,0.15)" filter="url(#blur2)"/>
+    <!-- CO2 molecules (animated) -->
+    <g id="co2-group">
+      <circle cx="100" cy="160" r="6" fill="rgba(255,100,60,0.7)"><animate attributeName="cy" values="160;60;160" dur="3s" repeatCount="indefinite"/></circle>
+      <circle cx="200" cy="180" r="5" fill="rgba(255,80,40,0.7)"><animate attributeName="cy" values="180;80;180" dur="4s" repeatCount="indefinite"/></circle>
+      <circle cx="150" cy="170" r="4" fill="rgba(255,120,80,0.6)"><animate attributeName="cy" values="170;70;170" dur="3.5s" repeatCount="indefinite"/></circle>
+      <circle cx="250" cy="155" r="6" fill="rgba(255,60,30,0.7)"><animate attributeName="cy" values="155;55;155" dur="2.8s" repeatCount="indefinite"/></circle>
+      <circle cx="80" cy="190" r="4" fill="rgba(255,140,80,0.6)" id="co2-5"><animate attributeName="cy" values="190;90;190" dur="4.2s" repeatCount="indefinite"/></circle>
+      <circle cx="320" cy="175" r="5" fill="rgba(255,60,60,0.6)" id="co2-6"><animate attributeName="cy" values="175;75;175" dur="3.2s" repeatCount="indefinite"/></circle>
+    </g>
+    <!-- Heat arrows -->
+    <g stroke="#ff4d4d" stroke-width="2" opacity="0.5">
+      <line x1="340" y1="80" x2="340" y2="180"><animate attributeName="opacity" values="0.2;0.7;0.2" dur="2s" repeatCount="indefinite"/></line>
+      <line x1="280" y1="90" x2="260" y2="200"><animate attributeName="opacity" values="0.2;0.6;0.2" dur="2.5s" repeatCount="indefinite"/></line>
+    </g>
+    <!-- Labels -->
+    <text x="200" y="20" text-anchor="middle" fill="rgba(0,212,255,0.6)" font-size="9" font-family="Orbitron" letter-spacing="2">ATMOSPHERE</text>
+    <text x="340" y="115" text-anchor="middle" fill="rgba(255,179,64,0.8)" font-size="8" font-family="Orbitron">SUN</text>
+    <text x="50" y="145" fill="rgba(255,100,60,0.7)" font-size="7" font-family="Orbitron">CO&#8322;</text>
+    <text x="200" y="240" text-anchor="middle" fill="rgba(100,200,100,0.6)" font-size="8" font-family="Orbitron" letter-spacing="1">EARTH SURFACE</text>`;
+})();
+
+// =====================================================
+// CLIMATE CONTROLS
+// =====================================================
+(function initClimate() {
+  const slider=document.getElementById('co2Slider');
+  const co2Val=document.getElementById('co2-val');
+  const tempVal=document.getElementById('tempValue');
+  const atmoEl=document.getElementById('atmo-compare');
+
+  const FWARMS=0.018;
+  function calcTemp(co2){return Math.round(-18+25*(1-Math.exp(-co2/280))+co2*FWARMS);}
+
+  function update(){
+    const co2=parseInt(slider.value);
+    co2Val.textContent=co2+' ppm';
+    const t=calcTemp(co2);
+    tempVal.textContent=t+'°C';
+    const warm=Math.min(1,(co2/1000));
+    document.getElementById('skyTop').setAttribute('stop-color',`hsl(${240-warm*220},80%,${8+warm*15}%)`);
+    document.getElementById('skyBot').setAttribute('stop-color',`hsl(${260-warm*200},60%,${12+warm*20}%)`);
+    const co2El=document.getElementById('co2-group');
+    if(co2El){const count=Math.round(2+warm*8);[...co2El.querySelectorAll('circle')].forEach((c,i)=>c.style.display=i<count?'':'none');}
+  }
+
+  const ATMO_DATA=[
+    {planet:'Earth (now)',co2Pct:0.04,color:'#4fa3e0',bar:20},
+    {planet:'Venus',co2Pct:96.5,color:'#e8cda0',bar:96},
+    {planet:'Mars',co2Pct:95.3,color:'#c1440e',bar:94},
+  ];
+  ATMO_DATA.forEach(a=>{
+    atmoEl.innerHTML+=`<div class="compare-planet"><div class="compare-name">${a.planet} — CO₂: ${a.co2Pct}%</div><div class="compare-bar-track"><div class="compare-bar" style="width:${a.bar}%;background:${a.color}"></div></div></div>`;
+  });
+
+  slider.addEventListener('input',update);
+  update();
+})();
+
+// =====================================================
+// NAVBAR + SCROLL
+// =====================================================
+(function initNav(){
+  const nav=document.getElementById('navbar');
+  const ham=document.getElementById('hamburger');
+  const mob=document.getElementById('mobileMenu');
+
+  ham.addEventListener('click',()=>{ham.classList.toggle('open');mob.classList.toggle('open');});
+  mob.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{ham.classList.remove('open');mob.classList.remove('open');}));
+
+  const sections=['hero','solar-system','constellations','starmap','planets','missions','skyguide','climate'];
+  window.addEventListener('scroll',()=>{
+    nav.classList.toggle('scrolled',window.scrollY>50);
+    let cur='';
+    sections.forEach(id=>{const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<=100)cur=id;});
+    document.querySelectorAll('.nav-links a').forEach(a=>{
+      a.classList.toggle('active',a.getAttribute('href')==='#'+cur);
+    });
+  });
+})();
+
+// =====================================================
+// SCROLL REVEAL
+// =====================================================
+(function initReveal(){
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:0.08});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+})();
+
+// =====================================================
+// LOADING SCREEN
+// =====================================================
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    const loader=document.getElementById('loader');
+    loader.classList.add('hidden');
+  },2800);
+});
+</script>
+</body>
+</html>
