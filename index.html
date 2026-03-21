@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKYVERSE — Cosmology Portal</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@300;400;500&family=Rajdhani:wght@400;600;700&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body,
+    html {
+      width: 100%;
+      height: 100%;
+      background: #00020a;
+      /* Deep space dark blue/black */
+      font-family: 'Exo 2', sans-serif;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    /* Background Effects */
+    .bg-gradient {
+      position: absolute;
+      inset: 0;
+      background: url('background.png') no-repeat center center;
+      background-size: cover;
+      z-index: 1;
+    }
+
+    .stars,
+    .twinkling {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .stars {
+      background: #000 url('https://raw.githubusercontent.com/shikhars/Space-CSS/master/stars.png') repeat top center;
+      opacity: 0.5;
+    }
+
+    .twinkling {
+      background: transparent url('https://raw.githubusercontent.com/shikhars/Space-CSS/master/twinkling.png') repeat top center;
+      animation: move-twink-back 200s linear infinite;
+      opacity: 0.3;
+    }
+
+    @keyframes move-twink-back {
+      from {
+        background-position: 0 0;
+      }
+
+      to {
+        background-position: -10000px 5000px;
+      }
+    }
+
+    /* Top Left Network Canvas */
+    #network-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 400px;
+      height: 400px;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    /* Main Content Container */
+    .hero-container {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    /* Typography */
+    .title-wrapper {
+      position: relative;
+      background: linear-gradient(90deg, transparent, rgba(15, 30, 80, 0.4), transparent);
+      padding: 15px 40px;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
+
+    .title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(40px, 8vw, 90px);
+      font-weight: 900;
+      letter-spacing: 12px;
+      margin: 0;
+      background: linear-gradient(180deg, #ffffff 30%, #a0c4ff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 60px rgba(100, 150, 255, 0.6);
+      /* Push the last letter spacing center alignment */
+      padding-left: 12px;
+    }
+
+    .subtitle {
+      font-family: 'Exo 2', sans-serif;
+      font-size: clamp(10px, 1.2vw, 14px);
+      letter-spacing: 10px;
+      color: rgba(120, 160, 220, 0.8);
+      text-transform: uppercase;
+      margin-bottom: 60px;
+      padding-left: 10px;
+    }
+
+    /* Action Buttons */
+    .action-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .ghost-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: rgba(5, 12, 30, 0.5);
+      border: 1px solid rgba(80, 130, 255, 0.3);
+      border-radius: 6px;
+      padding: 16px 36px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: rgba(200, 220, 255, 0.9);
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.4s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    /* The dot on the left of the button */
+    .ghost-btn::before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      background: rgba(100, 160, 255, 0.6);
+      border-radius: 50%;
+      position: absolute;
+      left: 15px;
+      transition: all 0.3s;
+    }
+
+    .ghost-btn:hover {
+      border-color: rgba(100, 180, 255, 0.8);
+      background: rgba(20, 50, 120, 0.4);
+      color: #fff;
+      box-shadow: 0 0 30px rgba(0, 100, 255, 0.4), inset 0 0 20px rgba(0, 100, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .ghost-btn:hover::before {
+      background: #fff;
+      box-shadow: 0 0 10px #fff;
+    }
+
+    /* Scroll Indicator */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      z-index: 10;
+    }
+
+    .scroll-text {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 9px;
+      letter-spacing: 5px;
+      color: rgba(100, 150, 220, 0.5);
+      text-transform: uppercase;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, rgba(100, 150, 220, 0.8), transparent);
+      animation: pulse-line 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-line {
+      0% {
+        transform: scaleY(0);
+        transform-origin: top;
+        opacity: 0;
+      }
+
+      50% {
+        transform: scaleY(1);
+        transform-origin: top;
+        opacity: 1;
+      }
+
+      50.1% {
+        transform: scaleY(1);
+        transform-origin: bottom;
+        opacity: 1;
+      }
+
+      100% {
+        transform: scaleY(0);
+        transform-origin: bottom;
+        opacity: 0;
+      }
+    }
+
+    /* ── Shooting Stars ── */
+    .shooting-stars {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .shooting-star {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 4px;
+      height: 4px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1), 0 0 0 8px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 1);
+      animation: shoot 4s ease-in-out infinite;
+    }
+
+    .shooting-star::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 300px;
+      height: 1px;
+      background: linear-gradient(90deg, #fff, transparent);
+    }
+
+    @keyframes shoot {
+      0% {
+        transform: rotate(315deg) translateX(0);
+        opacity: 1;
+      }
+
+      70% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: rotate(315deg) translateX(-1500px);
+        opacity: 0;
+      }
+    }
+
+    .shooting-star:nth-child(1) {
+      top: -20px;
+      left: 100%;
+      animation-delay: 0s;
+      animation-duration: 5s;
+    }
+
+    .shooting-star:nth-child(2) {
+      top: 200px;
+      left: 120%;
+      animation-delay: 2.5s;
+      animation-duration: 4s;
+    }
+
+    .shooting-star:nth-child(3) {
+      top: 500px;
+      left: 140%;
+      animation-delay: 4.2s;
+      animation-duration: 6s;
+    }
+
+    .shooting-star:nth-child(4) {
+      top: -100px;
+      left: 60%;
+      animation-delay: 7s;
+      animation-duration: 5s;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Background Elements -->
+  <div class="bg-gradient"></div>
+  <div class="stars"></div>
+  <div class="twinkling"></div>
+
+  <div class="shooting-stars">
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+  </div>
+
+  <!-- Geometric Network Top Left -->
+  <canvas id="network-canvas"></canvas>
+
+  <!-- Main Content -->
+  <div class="hero-container">
+    <div class="title-wrapper">
+      <h1 class="title">SKYVERSE</h1>
+    </div>
+    <div class="subtitle">An Interactive Cosmology & Astronomy Learning Portal</div>
+
+    <div class="action-row">
+      <a href="final.html" class="ghost-btn"
+        style="padding-left: 45px; font-size: 13px; letter-spacing: 6px; padding: 20px 50px 20px 65px;">Begin your
+        cosmic journey</a>
+    </div>
+  </div>
+
+  <!-- Scroll Indicator -->
+  <div class="scroll-indicator">
+    <div class="scroll-text">Enter Simulation</div>
+    <div class="scroll-line"></div>
+  </div>
+
+  <script>
+    // Simple Top-Left Network/Constellation Effect
+    const canvas = document.getElementById('network-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    function resize() {
+      width = canvas.width = 400; // Fixed size canvas, but responsive CSS
+      height = canvas.height = 400;
+    }
+    resize();
+
+    const particles = [];
+    for (let i = 0; i < 35; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        radius: Math.random() * 1.5 + 0.5
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw lines
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(100, 160, 255, ${0.3 - (dist / 100) * 0.3})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw particles
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Bounce off edges of the local canvas gently
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(150, 200, 255, 0.6)';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(100, 150, 255, 1)';
+        ctx.fill();
+      });
+
+      requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+</body>
+
+</html>
