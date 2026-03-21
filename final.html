@@ -615,18 +615,438 @@
             opacity: 0;
             text-shadow: 0 0 5px rgba(0, 212, 255, 0.4);
         }
+    
+        /* ── GLOBAL NAVIGATION ── */
+        .global-nav {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+            background: transparent; /* Remove dock background to mimic floating ghost buttons */
+            padding: 10px;
+        }
+
+        .nav-item {
+            font-family: 'Exo 2', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 4px;
+            color: rgba(200, 230, 255, 0.7);
+            text-transform: uppercase;
+            padding: 14px 28px 14px 44px; /* Room for the dot */
+            border-radius: 8px; /* Sharper */
+            border: 1px solid rgba(80, 130, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            background: rgba(5, 12, 30, 0.5);
+        }
+
+        /* The glowing dot from the mockup */
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background: rgba(100, 160, 255, 0.6);
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .nav-item:hover::before {
+            left: 100%;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #fff;
+            background: rgba(0, 212, 255, 0.15);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+        }
+
+        /* ── MODALS ── */
+        .glass-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 4, 15, 0.85);
+            backdrop-filter: blur(15px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .glass-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 1200px;
+            height: 85%;
+            background: rgba(6, 12, 30, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 20px;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.9), inset 0 0 30px rgba(0, 212, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .glass-modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to right, rgba(0, 212, 255, 0.05), transparent);
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 22px;
+            letter-spacing: 4px;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+        }
+
+        .modal-close {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            color: #00d4ff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 212, 255, 0.3);
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        /* Custom Scrollbar for Modal Body */
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(0, 5, 15, 0.5);
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        /* ── NASA SPECIFIC ── */
+        .nasa-search-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .nasa-input {
+            width: 400px;
+            background: rgba(0, 10, 25, 0.6);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: #fff;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .nasa-input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+
+        .nasa-btn {
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            padding: 0 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            background: rgba(0, 212, 255, 0.15);
+            color: #00d4ff;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .nasa-btn:hover {
+            background: rgba(0, 212, 255, 0.3);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .nasa-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .nasa-card {
+            background: rgba(5, 12, 30, 0.6);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nasa-card:hover {
+            border-color: rgba(0, 212, 255, 0.6);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .nasa-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .nasa-card-info {
+            padding: 15px;
+        }
+
+        .nasa-card-title {
+            font-size: 14px;
+            color: #fff;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .nasa-card-date {
+            font-size: 11px;
+            color: rgba(0, 212, 255, 0.7);
+            font-family: 'Orbitron', monospace;
+        }
+
+        #nasa-lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        #nasa-lightbox.active {
+            display: flex;
+        }
+
+        #nasa-lb-img {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
+        }
+
+        #nasa-lb-title {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            text-align: center;
+        }
+
+        #nasa-lb-desc {
+            margin-top: 10px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 800px;
+            text-align: center;
+            line-height: 1.6;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        #nasa-lb-close {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        #nasa-lb-close:hover { color: #fff; }
+
+        /* ── CINEMA SPECIFIC ── */
+        .cinema-container {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+        
+        .cinema-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
     </style>
 </head>
 
 <body>
 
+    <!-- Global Navigation Dock -->
+    <div class="global-nav">
+        <a href="index.html" class="nav-item" style="text-decoration: none;">Home</a>
+        <div class="nav-item active" onclick="closeAllModals()">3D Solar System</div>
+        <div class="nav-item" onclick="openModal('nasa-modal')">NASA Archives</div>
+        <div class="nav-item" onclick="openModal('cinema-modal')">Cosmic Cinema</div>
+        <div class="nav-item" onclick="openModal('climate-modal')">Earth Climate</div>
+        <div class="nav-item" onclick="openModal('sky-modal')">Tonight's Sky</div>
+    </div>
+        <div class="nav-item" onclick="openModal('nasa-modal')">NASA Archives</div>
+        <div class="nav-item" onclick="openModal('cinema-modal')">Cosmic Cinema</div>
+    </div>
+
+    <!-- NASA Archives Modal -->
+    <div id="nasa-modal" class="glass-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">NASA Image Archives</div>
+                <div class="modal-close" onclick="closeAllModals()">×</div>
+            </div>
+            <div class="modal-body">
+                <div class="nasa-search-bar">
+                    <input type="text" id="nasa-query" class="nasa-input" placeholder="Search the cosmos (e.g., Orion Nebula, Mars Rover)..." onkeydown="if(event.key === 'Enter') searchNASA()">
+                    <button class="nasa-btn" onclick="searchNASA()">Search</button>
+                    <button class="nasa-btn" onclick="nasaRandom()" style="background: rgba(200, 100, 255, 0.15); border-color: rgba(200, 100, 255, 0.5); color: #d49fff;">Randomize</button>
+                </div>
+                <div id="nasa-loading" style="text-align: center; display: none; margin: 40px; font-family: 'Orbitron', monospace; color: #00d4ff; letter-spacing: 2px;">Establishing link to NASA Image API...</div>
+                <div id="nasa-grid" class="nasa-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NASA Lightbox -->
+    <div id="nasa-lightbox">
+        <div id="nasa-lb-close" onclick="closeLightbox()">×</div>
+        <img id="nasa-lb-img" src="" alt="NASA Image">
+        <div id="nasa-lb-title"></div>
+        <div id="nasa-lb-desc"></div>
+    </div>
+
+    
+    <!-- Cosmic Cinema Modal V2 -->
+    <div id="cinema-modal" class="glass-modal">
+        <div class="modal-content" style="max-height: 800px; width: 95%; max-width: 1400px;">
+            <div class="modal-header">
+                <div class="modal-title">Cosmic Cinema <span style="font-size: 12px; color: rgba(0,212,255,0.6); letter-spacing: 2px;">| INTERACTIVE THEATER</span></div>
+                <div class="modal-close" onclick="closeAllModals()">×</div>
+            </div>
+            <div class="modal-body" style="display: flex; gap: 20px; padding: 20px;">
+                <div class="cinema-container" style="flex: 3; height: 600px;">
+                    <iframe id="cinema-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                <div class="cinema-playlist" style="flex: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 10px;">
+                    <div class="playlist-item" onclick="loadVideo('libKVRa01L8', 24)" style="background: rgba(10,20,50,0.6); padding: 15px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(0,212,255,0.4);">
+                        <div style="font-family: 'Orbitron', sans-serif; font-size: 13px; color: #fff; margin-bottom: 5px;">Journey to the Cosmos</div>
+                        <div style="font-family: 'Exo 2', sans-serif; font-size: 11px; color: #a0c4ff;">National Geographic Universe</div>
+                    </div>
+                    <div class="playlist-item" onclick="loadVideo('kOEDG3j1bjs', 0)" style="background: rgba(10,20,50,0.6); padding: 15px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(0,212,255,0.2);">
+                        <div style="font-family: 'Orbitron', sans-serif; font-size: 13px; color: #fff; margin-bottom: 5px;">The Great Black Hole</div>
+                        <div style="font-family: 'Exo 2', sans-serif; font-size: 11px; color: #a0c4ff;">Astrophysics Explained</div>
+                    </div>
+                    <div class="playlist-item" onclick="loadVideo('HdPzOWlLrbE', 0)" style="background: rgba(10,20,50,0.6); padding: 15px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(0,212,255,0.2);">
+                        <div style="font-family: 'Orbitron', sans-serif; font-size: 13px; color: #fff; margin-bottom: 5px;">Origin of the Space</div>
+                        <div style="font-family: 'Exo 2', sans-serif; font-size: 11px; color: #a0c4ff;">The Big Bang to Present</div>
+                    </div>
+                    <div class="playlist-item" onclick="loadVideo('JGXi_9A__Vc', 0)" style="background: rgba(10,20,50,0.6); padding: 15px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(0,212,255,0.2);">
+                        <div style="font-family: 'Orbitron', sans-serif; font-size: 13px; color: #fff; margin-bottom: 5px;">Birth of Planet Earth</div>
+                        <div style="font-family: 'Exo 2', sans-serif; font-size: 11px; color: #a0c4ff;">National Geographic: One Strange Rock</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Earth Climate Visualizer Modal -->
+    <div id="climate-modal" class="glass-modal">
+        <div class="modal-content" style="max-height: 700px; width: 90%; max-width: 1000px;">
+            <div class="modal-header">
+                <div class="modal-title">The Blue Marble <span style="font-size: 12px; color: rgba(0,212,255,0.6); letter-spacing: 2px;">| CLIMATE ENGINE</span></div>
+                <div class="modal-close" onclick="closeAllModals()">×</div>
+            </div>
+            <div class="modal-body" style="padding: 20px; text-align: center;">
+                <div style="font-family: 'Exo 2', sans-serif; font-size: 14px; color: #a0c4ff; margin-bottom: 15px;">Powered by PhET Interactive Simulations, University of Colorado Boulder</div>
+                <iframe src="https://phet.colorado.edu/sims/html/greenhouse-effect/latest/greenhouse-effect_en.html" width="100%" height="550" scrolling="no" allowfullscreen style="border: none; border-radius: 12px; box-shadow: 0 0 30px rgba(0, 212, 255, 0.2); background: #fff;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tonight's Sky Events Modal -->
+    <div id="sky-modal" class="glass-modal">
+        <div class="modal-content" style="max-height: 700px; width: 90%; max-width: 1100px;">
+            <div class="modal-header">
+                <div class="modal-title">Tonight's Sky <span style="font-size: 12px; color: rgba(0,212,255,0.6); letter-spacing: 2px;">| LIVE OBSERVATORY</span></div>
+                <div class="modal-close" onclick="closeAllModals()">×</div>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <iframe src="https://stellarium-web.org/" width="100%" height="600" frameborder="0" scrolling="no" allowfullscreen style="border-radius: 12px; box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);"></iframe>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+    
+    </div>
+
+
     <div id="loading">
-        <div id="load-title">SkyVerse</div>
-        <div id="load-sub">Solar System Initialising</div>
+        <div id="load-title" style="font-size: clamp(32px, 8vw, 64px); text-shadow: 0 0 60px rgba(0,212,255,1);">SkyVerse</div>
+        <div id="load-sub" style="font-size: 14px; color: #a0c4ff; margin-bottom: 20px; text-transform: uppercase;">Interactive Cosmology & Astronomy Portal</div>
         <div id="load-bar-wrap">
             <div id="load-bar"></div>
         </div>
-        <div id="load-status">Loading textures...</div>
+        <div id="load-status">Synchronizing Universal Data...</div>
     </div>
 
     <div id="ui-top">
@@ -927,7 +1347,13 @@
             loader.load(p.tex, tex => {
                 tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
                 const mat = p.emissive ? new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: new THREE.Color(0xff8822), emissiveIntensity: 0.9, roughness: 1 }) : new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8, metalness: 0.05 });
-                const mesh = new THREE.Mesh(new THREE.SphereGeometry(p.r, 64, 64), mat); mesh.rotation.z = THREE.MathUtils.degToRad(p.tilt); mesh.userData = { id: p.id }; group.add(mesh); rayTargets.push(mesh);
+                const mesh = new THREE.Mesh(new THREE.SphereGeometry(p.r, 64, 64), mat); mesh.rotation.z = THREE.MathUtils.degToRad(p.tilt); group.add(mesh);
+                
+                // Invisible larger hitBox for much easier mouse raycasting
+                const hitBox = new THREE.Mesh(new THREE.SphereGeometry(Math.max(p.r * 2.5, p.r + 4), 16, 16), new THREE.MeshBasicMaterial({ visible: false }));
+                hitBox.userData = { id: p.id };
+                group.add(hitBox);
+                rayTargets.push(hitBox);
                 if (p.emissive) [{ s: 1.1, c: 0xffaa00, o: 0.35 }, { s: 1.22, c: 0xff6600, o: 0.18 }, { s: 1.5, c: 0xff3300, o: 0.07 }].forEach(g => group.add(new THREE.Mesh(new THREE.SphereGeometry(p.r * g.s, 32, 32), new THREE.MeshBasicMaterial({ color: g.c, transparent: true, opacity: g.o, side: THREE.BackSide, blending: THREE.AdditiveBlending }))));
                 if (p.rings) { loader.load('2k_saturn_ring_alpha.png', rt => { const rg = new THREE.RingGeometry(p.r * 1.4, p.r * 2.5, 128), pos = rg.attributes.position, uv = rg.attributes.uv, v = new THREE.Vector3(); for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i); uv.setXY(i, (v.length() - p.r * 1.4) / (p.r * 1.1), 0.5); } const ring = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ map: rt, side: THREE.DoubleSide, transparent: true, opacity: 0.9 })); ring.rotation.x = Math.PI / 2 + 0.4; group.add(ring); }, undefined, () => { const ring = new THREE.Mesh(new THREE.RingGeometry(p.r * 1.4, p.r * 2.5, 128), new THREE.MeshBasicMaterial({ color: 0xc8a840, side: THREE.DoubleSide, transparent: true, opacity: 0.5 })); ring.rotation.x = Math.PI / 2 + 0.4; group.add(ring); }); }
                 if (p.id === 'earth') loader.load('2k_earth_clouds.jpg', ct => { group.add(new THREE.Mesh(new THREE.SphereGeometry(p.r * 1.025, 32, 32), new THREE.MeshStandardMaterial({ map: ct, transparent: true, opacity: 0.4, depthWrite: false, blending: THREE.AdditiveBlending }))); }, undefined, () => { });
@@ -1041,6 +1467,228 @@
             }
         }
     </script>
+
+    <script>
+        // Modal Logic
+        function openModal(id) {
+            closeAllModals();
+            document.getElementById(id).classList.add('active');
+            
+            // Update nav active state
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if(id === 'nasa-modal') document.querySelectorAll('.nav-item')[1].classList.add('active');
+            if(id === 'cinema-modal') {
+                document.querySelectorAll('.nav-item')[2].classList.add('active');
+                // Load iframe src only when opened to avoid playing in background
+                document.getElementById('cinema-iframe').src = "https://www.youtube.com/embed/libKVRa01L8?start=24&autoplay=1";
+            }
+            
+            // If NASA modal is opened for the first time, load random images
+            if(id === 'nasa-modal' && document.getElementById('nasa-grid').children.length === 0) {
+                nasaRandom();
+            }
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.glass-modal').forEach(m => m.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item')[0].classList.add('active'); // Set Solar System to active
+            // Stop video playing
+            document.getElementById('cinema-iframe').src = "";
+        }
+
+        // NASA API Logic
+        const NASA_API = 'https://images-api.nasa.gov/search?media_type=image&q=';
+        const defaultQueries = ["nebula", "galaxy", "mars rover", "saturn rings", "hubble deep field", "james webb", "aurora"];
+
+        async function searchNASA(forceQuery = null) {
+            const query = forceQuery || document.getElementById('nasa-query').value.trim() || 'milky way';
+            if(!forceQuery) document.getElementById('nasa-query').value = query;
+            
+            const grid = document.getElementById('nasa-grid');
+            const loader = document.getElementById('nasa-loading');
+            grid.innerHTML = '';
+            loader.style.display = 'block';
+
+            try {
+                const res = await fetch(NASA_API + encodeURIComponent(query));
+                const data = await res.json();
+                loader.style.display = 'none';
+
+                const items = data.collection.items.slice(0, 20);
+                if(items.length === 0) {
+                    grid.innerHTML = '<div style="color: #fff; grid-column: 1/-1; text-align: center;">No visual records found in the archive.</div>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    const info = item.data[0];
+                    const imgUrl = item.links?.[0]?.href;
+
+                    if(imgUrl && info) {
+                        const card = document.createElement('div');
+                        card.className = 'nasa-card';
+                        
+                        // Handle date formatting safely
+                        let dateStr = 'Unknown Date';
+                        if(info.date_created) {
+                            dateStr = info.date_created.substring(0, 10);
+                        }
+
+                        // Escape quotes for HTML payload
+                        const safeTitle = (info.title || 'Untitled').replace(/"/g, '&quot;');
+                        const safeDesc = (info.description || 'No description').replace(/"/g, '&quot;');
+                        const safeImg = imgUrl.replace(/"/g, '&quot;');
+
+                        card.innerHTML = `
+                            <img src="${safeImg}" alt="NASA">
+                            <div class="nasa-card-info">
+                                <div class="nasa-card-title">${safeTitle}</div>
+                                <div class="nasa-card-date">${dateStr}</div>
+                            </div>
+                        `;
+
+                        card.onclick = () => openLightbox(safeImg, safeTitle, safeDesc);
+                        grid.appendChild(card);
+                    }
+                });
+
+            } catch (err) {
+                loader.style.display = 'none';
+                grid.innerHTML = '<div style="color: #ff5555; grid-column: 1/-1; text-align: center;">Transmission Error: Could not connect to NASA API.</div>';
+            }
+        }
+
+        function nasaRandom() {
+            const q = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
+            document.getElementById('nasa-query').value = q;
+            searchNASA(q);
+        }
+
+        function openLightbox(img, title, desc) {
+            document.getElementById('nasa-lb-img').src = img;
+            document.getElementById('nasa-lb-title').textContent = title;
+            document.getElementById('nasa-lb-desc').textContent = desc || '';
+            document.getElementById('nasa-lightbox').classList.add('active');
+        }
+
+        function closeLightbox() {
+            document.getElementById('nasa-lightbox').classList.remove('active');
+        }
+
+        
+        // Video Playlist Logic
+        function loadVideo(id, start) {
+            document.getElementById('cinema-iframe').src = `https://www.youtube.com/embed/${id}?start=${start}&autoplay=1`;
+            // Highlight selected
+            document.querySelectorAll('.playlist-item').forEach(el => el.style.borderColor = 'rgba(0,212,255,0.2)');
+            event.currentTarget.style.borderColor = 'rgba(0,212,255,1)';
+        }
+
+        // Expanded OpenModal Logic
+        const originalOpenModal = openModal;
+        openModal = function(id) {
+            originalOpenModal(id);
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if(id === 'nasa-modal') document.querySelectorAll('.nav-item')[2].classList.add('active');
+            if(id === 'cinema-modal') {
+                document.querySelectorAll('.nav-item')[3].classList.add('active');
+                if(!document.getElementById('cinema-iframe').src.includes('youtube')) loadVideo('libKVRa01L8', 24);
+            }
+            if(id === 'climate-modal') {
+                document.querySelectorAll('.nav-item')[4].classList.add('active');
+                
+            }
+            if(id === 'sky-modal') document.querySelectorAll('.nav-item')[5].classList.add('active');
+        }
+        
+        // Climate Visualizer Logic
+        window.addEventListener('DOMContentLoaded', () => {
+            const co2Slider = document.getElementById('co2-slider');
+            if(!co2Slider) return;
+            const co2Readout = document.getElementById('co2-readout');
+            const tempReadout = document.getElementById('temp-readout');
+            const cCanvas = document.getElementById('earth-climate-canvas');
+            const cCtx = cCanvas.getContext('2d');
+            
+            let earthImg = new Image();
+            earthImg.src = '2k_earth_daymap.jpg'; 
+            
+            co2Slider.addEventListener('input', () => {
+                const val = parseInt(co2Slider.value);
+                co2Readout.textContent = val + " ppm";
+                
+                // Calculate temp anomaly (simplified physics for visualizer)
+                const anomaly = Math.log2(val / 280) * 3.0; 
+                tempReadout.textContent = (anomaly > 0 ? "+" : "") + anomaly.toFixed(1) + "°C";
+                if(anomaly > 2.0) tempReadout.style.color = "#ff4444";
+                else if(anomaly > 1.0) tempReadout.style.color = "#ffaa00";
+                else tempReadout.style.color = "#66ff66";
+                
+                drawClimateCanvas();
+            });
+            
+            window.drawClimateCanvas = function() {
+                if(!cCtx) return;
+                const w = cCanvas.width;
+                const h = cCanvas.height;
+                cCtx.clearRect(0,0,w,h);
+                
+                // Draw Earth
+                if(earthImg.complete && earthImg.naturalHeight !== 0) {
+                    cCtx.save();
+                    cCtx.beginPath();
+                    cCtx.arc(w/2, h/2, w/2 * 0.8, 0, Math.PI*2);
+                    cCtx.clip();
+                    cCtx.drawImage(earthImg, 0, 0, w, h);
+                    cCtx.restore();
+                } else {
+                    cCtx.beginPath();
+                    cCtx.arc(w/2, h/2, w/2 * 0.8, 0, Math.PI*2);
+                    cCtx.fillStyle = '#0a2a5c';
+                    cCtx.fill();
+                }
+                
+                // Draw Atmosphere based on CO2
+                const val = parseInt(co2Slider.value);
+                const intensity = (val - 280) / (1000 - 280); 
+                
+                const grad = cCtx.createRadialGradient(w/2, h/2, w/2 * 0.8, w/2, h/2, w/2);
+                const gAlpha = 0.2 + (intensity * 0.6);
+                const rCol = Math.floor(100 + (intensity * 155));
+                grad.addColorStop(0, `rgba(${rCol}, 150, 255, ${gAlpha})`);
+                grad.addColorStop(1, 'rgba(255, 50, 50, 0)');
+                
+                cCtx.beginPath();
+                cCtx.arc(w/2, h/2, w/2 * 0.98, 0, Math.PI*2);
+                cCtx.fillStyle = grad;
+                cCtx.fill();
+                
+                // Draw Heat Radiation Arrows
+                cCtx.strokeStyle = `rgba(255, 100, 50, ${intensity})`;
+                cCtx.lineWidth = 3;
+                for(let i=0; i<8; i++) {
+                    const angle = (i/8) * Math.PI * 2;
+                    const r1 = w/2 * 0.85;
+                    const r2 = r1 + 20 - (intensity * 10); // Arrows get trapped
+                    
+                    cCtx.beginPath();
+                    cCtx.moveTo(w/2 + Math.cos(angle)*r1, h/2 + Math.sin(angle)*r1);
+                    cCtx.lineTo(w/2 + Math.cos(angle)*r2, h/2 + Math.sin(angle)*r2);
+                    cCtx.stroke();
+                }
+            };
+        });
+    
+        // Auto-open modals based on URL Params
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const openParam = params.get('open');
+            if(openParam === 'nasa') openModal('nasa-modal');
+            if(openParam === 'cinema') openModal('cinema-modal');
+        });
+    </script>
+
 </body>
 
 </html>
